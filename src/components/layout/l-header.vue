@@ -11,7 +11,7 @@
         <n-space class="user-control a-center">
           <slot name="control"></slot>
           <!-- 添加 -->
-          <n-tooltip trigger="hover">
+          <n-tooltip trigger="hover" v-if="isLogin">
             <template #trigger>
               <n-button
                 strong
@@ -25,7 +25,7 @@
                 </template>
               </n-button>
             </template>
-            添加新的 Hosts 内容
+            {{ $t("添加新的 Hosts 内容") }}
           </n-tooltip>
           <!-- 设置 -->
           <n-dropdown
@@ -71,7 +71,7 @@ const store = useSettingsStore();
 const userStore = useUserStore();
 const { show: showAddHosts } = useHostsStore();
 const { settings } = storeToRefs(store);
-const { info } = storeToRefs(userStore);
+const { isLogin, info } = storeToRefs(userStore);
 const emits = defineEmits<{
   (event: "onSettting"): void;
   (event: "onAddHosts"): void;

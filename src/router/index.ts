@@ -2,6 +2,7 @@ import routes from "./routes";
 import type { App } from "vue";
 import { useUserStore } from "@/store";
 import { createRouter, createWebHashHistory } from "vue-router";
+import { getLoginUser } from "@/utils";
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -10,15 +11,19 @@ export const router = createRouter({
 
 router.beforeEach((to, from) => {
   const store = useUserStore();
-  if (to.name === "Login" || from.name === "Login") {
+  const data = getLoginUser();
+  if (data) {
+    store.setLogin(true);
+    store.setMode(data.mode);
+    store.setUserInfo(data.info);
     return true;
   }
   if (!store.isLogin) {
-    to.name !== "Login" &&
-      from.name !== "Login" &&
+    if (to.name !== "Login" || (to.name !== "Login" && from.name !== "Login")) {
       router.replace({
         name: store.isLogin ? (to.name as string) : "Login",
       });
+    }
   }
   return true;
 });

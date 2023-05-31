@@ -1,6 +1,7 @@
-import { SettingSpace } from "@/store";
+import { User } from "@/store";
 import { urlAlphabet, customAlphabet } from "nanoid";
 import { useJSBridge, SYSTEM_ENV } from "@/plugins/Bridge";
+import { APP_NAME } from "./constant";
 
 export const getRandID = customAlphabet(urlAlphabet, 16);
 
@@ -68,11 +69,26 @@ export const openDirectory = (file?: string) => {
   });
 };
 
+interface UserInfo extends User {
+  ua: string;
+  home: string;
+}
+
+/**
+ * 获取登录用户信息
+ * @param name
+ * @returns
+ */
+export const getLoginUser = () => {
+  const data = window.sessionStorage.getItem(APP_NAME);
+  return data ? JSON.parse(decodeURIComponent(window.atob(data))) : null;
+};
+
 /**
  * 获取用户信息
  * @param file
  */
-export const getUserInfo = (): Promise<SettingSpace.User> => {
+export const getUserInfo = (): Promise<UserInfo> => {
   return new Promise((resolve) => {
     if (env === SYSTEM_ENV.UTOOLS) {
       useBridge((bridge) => {
@@ -80,7 +96,7 @@ export const getUserInfo = (): Promise<SettingSpace.User> => {
         resolve({
           ua: window.navigator.userAgent,
           home: bridge.getPath("home"),
-          user: user as SettingSpace.User["user"],
+          ...user,
         });
       });
     }
@@ -90,8 +106,8 @@ export const getUserInfo = (): Promise<SettingSpace.User> => {
         bridge("getUserInfo").then((res: any) => {
           resolve({
             ua: window.navigator.userAgent,
-            user: res.user,
             home: res.home,
+            ...res.user,
           });
         });
       });

@@ -12,7 +12,7 @@
 import { ref, defineComponent } from "vue";
 export default defineComponent({
   name: "EditPage",
-  setup(props, ctx) {
+  setup() {
     const content = ref("");
     return {
       useFormat: true,

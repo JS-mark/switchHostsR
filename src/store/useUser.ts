@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { set, isEmpty } from "lodash-es";
+import { APP_NAME } from "@/utils/constant";
 
 export type UserMode =
   | "weibo"
@@ -48,6 +49,17 @@ export const useUserStore = defineStore("user", {
       for (const [key, value] of Object.entries(data)) {
         set(this.info, key, value);
       }
+      window.sessionStorage.setItem(
+        APP_NAME,
+        window.btoa(
+          encodeURIComponent(
+            JSON.stringify({
+              mode: this.mode,
+              info: data,
+            }),
+          ),
+        ),
+      );
     },
   },
 });

@@ -2,7 +2,7 @@
   <n-modal
     v-model:show="showModal"
     preset="card"
-    title="偏好设置"
+    :title="$t('偏好设置')"
     :bordered="false"
     :size="'medium'"
     style="width: 600px"
@@ -22,19 +22,19 @@
       pane-style="height: 430px; padding-left: 4px; padding-right: 4px; box-sizing: border-box;"
     >
       <!-- 通用 -->
-      <n-tab-pane name="general" tab="通用">
+      <n-tab-pane name="general" :tab="$t('general')">
         <general />
       </n-tab-pane>
       <!-- 命令 -->
-      <n-tab-pane name="cmd" tab="命令">
+      <n-tab-pane name="cmd" :tab="$t('order')">
         <cmd />
       </n-tab-pane>
       <!-- 代理 -->
-      <n-tab-pane name="proxy" tab="代理">
+      <n-tab-pane name="proxy" :tab="$t('proxy')">
         <proxy />
       </n-tab-pane>
       <!-- 高级 -->
-      <n-tab-pane name="advanced" tab="高级">
+      <n-tab-pane name="advanced" :tab="$t('advanced')">
         <advanced />
       </n-tab-pane>
     </n-tabs>

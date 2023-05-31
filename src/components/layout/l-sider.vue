@@ -39,7 +39,7 @@
           <template #icon>
             <svg-icon name="settings" size="16px"></svg-icon>
           </template>
-          <template v-if="!collapsed">更多</template>
+          <template v-if="!collapsed">{{ $t("更多") }}</template>
         </n-button>
       </n-dropdown>
     </section>

@@ -1,8 +1,12 @@
 <template>
   <div class="error-main box">
     <svg-icon name="404" size="300px" />
-    <p class="not-found-text">你访问的页面不存在</p>
-    <n-button round type="primary" @click="goHome">返回首页</n-button>
+    <p class="not-found-text">
+      {{ $t("你访问的页面不存在") }}
+    </p>
+    <n-button round type="primary" @click="goHome">
+      {{ $t("返回首页") }}
+    </n-button>
   </div>
 </template>
 <script lang="ts">
@@ -15,7 +19,9 @@ export default defineComponent({
 
     return {
       goHome: () => {
-        router.push("/");
+        router.replace({
+          name: "Home",
+        });
       },
     };
   },
