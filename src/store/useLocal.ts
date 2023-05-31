@@ -1,18 +1,18 @@
-import { defineStore } from 'pinia'
-import emitter from '@/plugins/emitter'
-import { setHistory } from '@/router/history'
-import { type RouteRecordRaw } from 'vue-router'
+import { defineStore } from "pinia";
+import emitter from "@/plugins/emitter";
+import { setHistory } from "@/router/history";
+import { type RouteRecordRaw } from "vue-router";
 
-export const useLocalStore = defineStore('local', {
+export const useLocalStore = defineStore("local", {
   state: () => ({
-    name: 'Mark',
+    name: "Mark",
     hosts: new Map(),
   }),
   getters: {},
   actions: {
     setName(name: string) {
-      if (!name) return
-      this.name = name
+      if (!name) return;
+      this.name = name;
     },
     /**
      * 创建
@@ -23,32 +23,32 @@ export const useLocalStore = defineStore('local', {
     create(
       space: string,
       data: RouteRecordRaw,
-      cb?: (route?: RouteRecordRaw) => void
+      cb?: (route?: RouteRecordRaw) => void,
     ) {
       if (!space || this.hasHosts(this.getSpace(space))) {
-        cb && cb()
-        return
+        cb && cb();
+        return;
       }
-      delete data.redirect
+      delete data.redirect;
       /**
        * Notice: 未重写类型，使用删除 `redirect` 达到目的
        */
       // @ts-ignore
       const route: RouteRecordRaw = {
         ...data,
-        component: () => import('@/pages/edit/index.vue'),
-      }
-      this.hosts.set(this.getSpace(space), route)
-      setHistory(space, route)
+        component: () => import("@/pages/edit/index.vue"),
+      };
+      this.hosts.set(this.getSpace(space), route);
+      setHistory(space, route);
       // 触发事件更新
-      emitter.emit('onAddRoute')
-      cb && cb(route)
+      emitter.emit("onAddRoute");
+      cb && cb(route);
     },
     restore(list: { space: string; data: RouteRecordRaw }[]) {
       const arr = list.map((item) => {
-        const { space, data } = item
+        const { space, data } = item;
         if (!space || this.hasHosts(this.getSpace(space))) {
-          return
+          return;
         }
         /**
          * Notice: 未重写类型，使用删除 `redirect` 达到目的
@@ -56,28 +56,28 @@ export const useLocalStore = defineStore('local', {
         // @ts-ignore
         const route: RouteRecordRaw = {
           ...data,
-          component: () => import('@/pages/edit/index.vue'),
-        }
-        this.hosts.set(this.getSpace(space), route)
+          component: () => import("@/pages/edit/index.vue"),
+        };
+        this.hosts.set(this.getSpace(space), route);
         // 触发事件更新
-        return route
-      })
-      emitter.emit('onRestoreHistoryRoute', arr as RouteRecordRaw[])
+        return route;
+      });
+      emitter.emit("onRestoreHistoryRoute", arr as RouteRecordRaw[]);
     },
     clear(space: string) {
-      if (!space) return
-      this.hosts.delete(this.getSpace(space))
+      if (!space) return;
+      this.hosts.delete(this.getSpace(space));
     },
     destroy() {
-      this.hosts = new Map()
-      emitter.off('onAddRoute')
+      this.hosts = new Map();
+      emitter.off("onAddRoute");
     },
     getSpace(space: string) {
-      return `${this.name}__${space}`
+      return `${this.name}__${space}`;
     },
     hasHosts(space: string): RouteRecordRaw | undefined {
-      if (!space) return
-      return this.hosts.get(`${this.name}__${space}`)
+      if (!space) return;
+      return this.hosts.get(`${this.name}__${space}`);
     },
   },
-})
+});

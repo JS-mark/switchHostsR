@@ -2,10 +2,7 @@
   <div class="error-main box">
     <svg-icon name="404" size="300px" />
     <p class="not-found-text">你访问的页面不存在</p>
-    <n-button
-      round
-      type="primary"
-      @click="goHome">返回首页</n-button>
+    <n-button round type="primary" @click="goHome">返回首页</n-button>
   </div>
 </template>
 <script lang="ts">
@@ -13,7 +10,7 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
-  setup () {
+  setup() {
     const router = useRouter();
 
     return {

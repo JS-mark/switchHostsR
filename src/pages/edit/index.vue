@@ -1,9 +1,5 @@
 <template>
-  <editor
-    v-model="content"
-    :format="useFormat"
-    class="editor"
-  />
+  <editor v-model="content" :format="useFormat" class="editor" />
 </template>
 
 <style lang="stylus" scoped>
@@ -13,15 +9,15 @@
 </style>
 
 <script lang="ts">
-import { ref, defineComponent } from 'vue'
+import { ref, defineComponent } from "vue";
 export default defineComponent({
   name: "EditPage",
   setup(props, ctx) {
-    const content = ref("")
+    const content = ref("");
     return {
       useFormat: true,
-      content
-    }
-  }
-})
+      content,
+    };
+  },
+});
 </script>

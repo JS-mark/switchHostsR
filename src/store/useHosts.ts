@@ -1,26 +1,28 @@
-import { defineStore } from 'pinia'
-import { set, isEmpty } from 'lodash-es'
+import { defineStore } from "pinia";
+import { set, isEmpty } from "lodash-es";
+import { SettingSpace } from "./useSettings";
 export interface Content {
-  [key: string]: any
+  [key: string]: any;
 }
 
 export interface ShowOptions {
-  content?: Content
-  mode?: Mode
+  settings?: SettingSpace.Settings;
+  content?: Content;
+  mode?: Mode;
 }
 
-export type Mode = 'create' | 'edit'
+export type Mode = "create" | "edit";
 
-export const useHostsStore = defineStore('hosts', {
+export const useHostsStore = defineStore("hosts", {
   state: () => ({
     isShowEditor: false,
-    mode: 'create',
+    mode: "create",
     content: null,
   }),
   actions: {
     setMode(mode: Mode) {
-      if (!mode) return
-      this.mode = mode
+      if (!mode) return;
+      this.mode = mode;
     },
     /**
      * 设置数据
@@ -28,24 +30,24 @@ export const useHostsStore = defineStore('hosts', {
      * @returns
      */
     setContent(content: Content) {
-      if (!content) return
-      set(this, 'content', content)
+      if (!content) return;
+      set(this, "content", content);
     },
     /**
      * show
      * @param options
      */
     show(options?: ShowOptions) {
-      this.isShowEditor = true
+      this.isShowEditor = true;
       if (!isEmpty(options)) {
-        const { content, mode } = options
-        content && isEmpty(content) && this.setContent(content)
-        mode && this.setMode(mode)
+        const { content, mode } = options;
+        content && isEmpty(content) && this.setContent(content);
+        mode && this.setMode(mode);
       }
     },
     hide() {
-      this.isShowEditor = false
-      this.content = null
+      this.isShowEditor = false;
+      this.content = null;
     },
   },
-})
+});

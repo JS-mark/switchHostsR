@@ -1,15 +1,17 @@
 /// <reference types="vite/client" />
-
-declare let window: Window & typeof globalThis
+import { MessageApiInjection } from "naive-ui";
+declare let window: Window & typeof globalThis;
 
 declare global {
   interface Window {
-    __MonacoEditor: monaco.editor.IStandaloneCodeEditor
+    utools: any;
+    __MonacoEditor: monaco.editor.IStandaloneCodeEditor;
+    $useMessage: MessageApiInjection;
   }
 }
 
 declare module "*.vue" {
-  import type { DefineComponent } from "vue"
-  const component: DefineComponent<{}, {}, any>
-  export default component
+  import type { DefineComponent } from "vue";
+  const component: DefineComponent<object, object, any>;
+  export default component;
 }

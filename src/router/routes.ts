@@ -1,64 +1,73 @@
-import { RouteRecordRaw } from 'vue-router'
-import { Home, Albums } from '@vicons/ionicons5'
-import { generateRoutes, processRoutes, genSidersMenus } from './utils'
+import { RouteRecordRaw } from "vue-router";
+import { Home, Albums } from "@vicons/ionicons5";
+import { generateRoutes, processRoutes, genSidersMenus } from "./utils";
 
-export * from './utils'
+export * from "./utils";
 export const routes: RouteRecordRaw[] = [
   {
-    path: '/',
-    name: 'Home',
+    path: "/home",
+    name: "Home",
     meta: {
-      title: '首页',
+      title: "首页",
       icon: Home,
       hidden: false,
     },
-    component: () => import('@/pages/home/index.vue'),
+    component: () => import("@/pages/home/welcome.vue"),
   },
   {
-    path: '/about',
-    name: 'About',
+    path: "/login",
+    name: "Login",
     meta: {
-      title: '关于',
+      title: "登录",
+      hidden: true,
+    },
+    component: () => import("@/pages/login/index.vue"),
+  },
+  {
+    path: "/about",
+    name: "About",
+    meta: {
+      title: "关于",
       icon: Albums,
       hidden: false,
     },
-    component: () => import('@/pages/about/index.vue'),
+    component: () => import("@/pages/about/index.vue"),
   },
   {
-    path: '/error',
-    name: 'Error',
+    path: "/error",
+    name: "Error",
     meta: {
-      title: '异常页面',
-      icon: 'local_fire_department',
+      title: "异常页面",
+      icon: "local_fire_department",
       hidden: true,
     },
     children: [
       {
-        path: '/404',
+        path: "/404",
         meta: {
-          title: '404 - NotFound',
+          title: "404 - NotFound",
           hidden: true,
         },
-        redirect: '/',
+        redirect: "/",
       },
     ],
   },
   {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
     meta: {
       hidden: true,
     },
-    component: () => import('@/pages/404/404.vue'),
+    component: () => import("@/pages/404/404.vue"),
   },
-]
+];
 
-export const defaultRoute = 'Home'
+export const defaultRoute = "Home";
 
-export const menus = genSidersMenus(routes)
+export const menus = genSidersMenus(routes);
 
 const routeList = processRoutes(routes).filter(
-  (item) => !!item.path || !!item.children?.length || !!item.redirect
-)
+  (item) => !!item.path || !!item.children?.length || !!item.redirect,
+);
 
-export default generateRoutes(routeList)
+export default generateRoutes(routeList);

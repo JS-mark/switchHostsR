@@ -1,9 +1,6 @@
 <template>
   <div class="editor__box">
-    <div
-      id="container"
-      class="editor__box__container"
-    />
+    <div id="container" class="editor__box__container" />
   </div>
 </template>
 
@@ -14,35 +11,40 @@ export default {
 </script>
 <script lang="ts" setup>
 import useMonaco from "./monaco";
-import { useLoadingBar } from 'naive-ui'
+import { useLoadingBar } from "naive-ui";
 import { watchEffect, reactive, onMounted, onUnmounted } from "vue";
 
-const loadingBar = useLoadingBar()
+const loadingBar = useLoadingBar();
 
 const data = reactive({
   value: "",
 });
 
-const props = withDefaults(defineProps<{
-  modelValue: string
-  language?: string
-  format?: boolean
-  preComment?: string
-  options?: {[key: string]: any}
-}>(), {
-  modelValue: "",
-  language: "shell",
-  preComment: "",
-  format: true,
-  options: () => ({}),
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    language?: string;
+    format?: boolean;
+    preComment?: string;
+    options?: { [key: string]: any };
+  }>(),
+  {
+    modelValue: "",
+    language: "shell",
+    preComment: "",
+    format: true,
+    options: () => ({}),
+  },
+);
 
-const { updateVal, useEditor, destroy, createEditor, onFormatDoc } = useMonaco(props.language);
+const { updateVal, useEditor, destroy, createEditor, onFormatDoc } = useMonaco(
+  props.language,
+);
 
 const emits = defineEmits<{
-  (event: "update:modelValue", value: string): void
-  (event: "focus"): void
-  (event: "blur"): void
+  (event: "update:modelValue", value: string): void;
+  (event: "focus"): void;
+  (event: "blur"): void;
 }>();
 
 const initEditor = () => {
@@ -56,13 +58,13 @@ const initEditor = () => {
 
 const getValue = (): Promise<{ [key: string]: unknown }> => {
   return new Promise((resolve, reject) => {
-    loadingBar.start()
+    loadingBar.start();
     useEditor((editor) => {
       try {
-        loadingBar.finish()
+        loadingBar.finish();
         resolve(JSON.parse(editor?.getValue()));
       } catch (error) {
-        loadingBar.error()
+        loadingBar.error();
         reject(error);
       }
     });
@@ -84,9 +86,11 @@ const initEditorEvent = () => {
   });
 };
 
-const updateMonacoVal = (_val ?: string, format?: boolean) => {
+const updateMonacoVal = (_val?: string, format?: boolean) => {
   const { modelValue, preComment } = props;
-  const val = preComment ? `${preComment}\n${_val || modelValue}` : (_val || modelValue);
+  const val = preComment
+    ? `${preComment}\n${_val || modelValue}`
+    : _val || modelValue;
   updateVal(val, format);
 };
 
@@ -101,12 +105,12 @@ watchEffect(() => {
 });
 
 onMounted(() => {
-  loadingBar.start()
+  loadingBar.start();
   setTimeout(() => {
     initEditor();
     initEditorEvent();
     updateMonacoVal(props.modelValue, props.format);
-    loadingBar.finish()
+    loadingBar.finish();
   }, 100);
 });
 

@@ -32,3 +32,44 @@
 .fade-leave-active {
   transition: all 0.3s cubic-bezier(1, 0.6, 0.6, 1);
 }
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+}
+
+.f-center {
+  justify-content: center;
+}
+
+.f-start {
+  justify-content: flex-start;
+}
+
+.f-end {
+  justify-content: flex-end;
+}
+
+.a-center {
+  align-items: center;
+}
+
+.a-start {
+  align-items: flex-start;
+}
+
+.a-end {
+  align-items: flex-end;
+}
+
+.f-around {
+  justify-content: space-around;
+}
+.f-between {
+  justify-content: space-between;
+}

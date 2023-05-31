@@ -2,78 +2,87 @@
   <n-config-provider :theme="theme">
     <n-loading-bar-provider>
       <n-message-provider>
+        <!-- 头部 -->
+        <l-header></l-header>
+        <!-- 主体区域 -->
         <n-layout class="main" has-sider>
+          <!-- 侧边栏 -->
           <l-sider></l-sider>
           <n-layout>
-            <!-- <n-layout-header v-if="isShowHeader" class="layout-header" bordered>
-            {{ title }}
-            </n-layout-header> -->
-            <!-- <n-layout-content :class="['layout-content', { home: isShowHeader }]"> -->
             <n-layout-content :class="['layout-content']">
               <router-view v-slot="{ Component, route }">
                 <transition name="fade" mode="out-in">
-                  <component :is="Component" :key="route.path"/>
+                  <component :is="Component" :key="route.path" />
                 </transition>
               </router-view>
               <n-back-top :bottom="100" :visibility-height="300"></n-back-top>
             </n-layout-content>
+            <!-- 底部 -->
             <n-layout-footer class="layout-footer" bordered>
               @2023 By Mark
             </n-layout-footer>
           </n-layout>
         </n-layout>
-        <!-- 抽屉 -->
-      <list-drawer></list-drawer>
+        <!-- 添加 hosts 分类抽屉 -->
+        <add-hosts />
+        <!-- 设置组件 -->
+        <settings />
       </n-message-provider>
     </n-loading-bar-provider>
   </n-config-provider>
 </template>
 
 <script lang="ts">
-import { useRoute } from 'vue-router'
-import { useDark } from "@vueuse/core"
-import { computed, defineComponent } from 'vue'
-import LSider from '@/components/layout/l-sider.vue'
-import { darkTheme, type GlobalTheme } from 'naive-ui'
-import ListDrawer from '@/components/list-drawer/index.vue'
+import { useRoute } from "vue-router";
+import { useDark } from "@vueuse/core";
+import { computed, defineComponent } from "vue";
+import LSider from "@/components/layout/l-sider.vue";
+import LHeader from "@/components/layout/l-header.vue";
+import { darkTheme, type GlobalTheme } from "naive-ui";
+import AddHosts from "@/components/add-hosts/index.vue";
+import Settings from "@/components/settings/index.vue";
+
 export default defineComponent({
   name: "App",
   components: {
     LSider,
-    ListDrawer
+    LHeader,
+    Settings,
+    AddHosts,
   },
-  setup(ctx, props) {
-    const route = useRoute()
+  setup() {
+    const route = useRoute();
     const title = computed(() => {
-      return route.meta.title
-    })
-
+      return route.meta.title;
+    });
     const isDark = useDark({
       selector: "body",
       attribute: "color-scheme",
       valueDark: "dark",
       valueLight: "light",
-    })
+    });
 
     const theme = computed<GlobalTheme | null>(() => {
-      return isDark.value ? darkTheme : null
-    })
+      return isDark.value ? darkTheme : null;
+    });
 
-    const isShowHeader = computed(() => !(route.name === 'Home' || route.name === 'NotFound'))
+    const isShowHeader = computed(
+      () => !(route.name === "Home" || route.name === "NotFound"),
+    );
+
     return {
       title,
       theme,
-      isShowHeader
-    }
-  }
-})
+      isShowHeader,
+    };
+  },
+});
 </script>
-
 
 <style lang="stylus" scoped>
 .main
   width 100vw
-  height 100vh
+  height calc(100vh - 58px)
 
   & .layout-content
     width 100%
