@@ -29,7 +29,7 @@
       <section class="column">
         <n-radio-group v-model:value="model.writeMode" name="writeMode">
           <n-space>
-            <n-radio value="1">{{ $t("add") }}</n-radio>
+            <n-radio value="1">{{ $t("append") }}</n-radio>
             <n-radio value="2">{{ $t("overlay") }}</n-radio>
           </n-space>
         </n-radio-group>

@@ -23,6 +23,7 @@
             :rules="rules"
             label-placement="left"
             label-width="auto"
+            :key="labelWidth"
             size="medium"
             require-mark-placement="right-hanging"
           >
@@ -46,7 +47,7 @@
               dashed
               @click="login"
             >
-              {{ isLogin ? $t("logined") : $t("login.btn") }}
+              {{ isLogin ? $t("Logged") : $t("login.btn") }}
             </n-button>
           </n-form>
         </div>
@@ -58,6 +59,7 @@
 <script lang="ts">
 import {
   ref,
+  computed,
   reactive,
   defineComponent,
   onBeforeMount,
@@ -80,7 +82,7 @@ export default defineComponent({
       userMode: "github",
       account: "",
     });
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const router = useRouter();
     const loading = ref(false);
     const videoStyle = ref({});
@@ -89,6 +91,10 @@ export default defineComponent({
     const formRef = ref<FormInst | null>(null);
     const { setMode, setLogin, setUserInfo } = store;
     const { isLogin, info: userInfo } = storeToRefs(store);
+
+    const labelWidth = computed(() => {
+      return locale.value;
+    });
 
     const login = (event: MouseEvent) => {
       loading.value = true;
@@ -166,6 +172,7 @@ export default defineComponent({
       loading,
       userInfo,
       isLogin,
+      labelWidth,
       videoStyle,
       formRef,
       data,

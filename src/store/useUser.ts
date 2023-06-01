@@ -32,6 +32,16 @@ export const useUserStore = defineStore("user", {
     },
   }),
   actions: {
+    clearUserInfo() {
+      this.mode = "";
+      this.info = {
+        nickname: "",
+        email: "",
+        home: "",
+        avatar: "",
+        messageNum: 0,
+      };
+    },
     setMode(mode: UserMode) {
       if (!mode) return;
       this.mode = mode;

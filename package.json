@@ -31,6 +31,7 @@
     "vue-router": "^4.1.6"
   },
   "devDependencies": {
+    "@intlify/unplugin-vue-i18n": "^0.11.0",
     "@tauri-apps/cli": "^1.2.3",
     "@types/json-server": "^0.14.4",
     "@types/lodash-es": "^4.17.7",

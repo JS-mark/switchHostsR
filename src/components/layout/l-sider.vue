@@ -24,7 +24,7 @@
         placement="right"
         trigger="hover"
         size="large"
-        :options="options"
+        :options="bottomMenus($t)"
         :show-arrow="true"
         @select="onDropdownSelected"
       >
@@ -53,65 +53,21 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import emitter from "@/plugins/emitter";
-import { HistoryMenus } from "@/router/history";
-import { NIcon, type MenuOption } from "naive-ui";
-import { RouterLink, useRoute, useRouter } from "vue-router";
-import { shallowRef, ref, h, watchEffect, onMounted } from "vue";
 import {
   menus as defaultMenus,
   genSidersMenus,
   defaultRoute,
 } from "@/router/routes";
-
+import emitter from "@/plugins/emitter";
+import { bottomMenus } from "@/utils/menu";
+import { HistoryMenus } from "@/router/history";
+import { NIcon, type MenuOption } from "naive-ui";
+import { RouterLink, useRoute, useRouter } from "vue-router";
+import { shallowRef, ref, h, watchEffect, onMounted } from "vue";
 import { CaretDownOutline, SettingsSharp } from "@vicons/ionicons5";
-import SvgIcon from "@/components/svg.vue";
-
 const route = useRoute();
 const router = useRouter();
 const menus = shallowRef<MenuOption[]>(defaultMenus);
-const options = [
-  {
-    label: "主页",
-    key: "home",
-    icon() {
-      return h(SvgIcon, { name: "home", size: "16px" });
-    },
-  },
-  {
-    label: "关于",
-    key: "about",
-    icon() {
-      return h(SvgIcon, {
-        name: "about",
-        size: "16px",
-      });
-    },
-  },
-  { type: "divider" },
-  {
-    label: "检查更新",
-    key: "outdated",
-    icon() {
-      return h(SvgIcon, { name: "updated", size: "16px" });
-    },
-  },
-  {
-    label: "意见反馈",
-    key: "issues",
-    icon() {
-      return h(SvgIcon, { name: "issues", size: "16px" });
-    },
-  },
-  { type: "divider" },
-  {
-    label: "回收站",
-    key: "recycle",
-    icon() {
-      return h(SvgIcon, { name: "recycle", size: "16px" });
-    },
-  },
-];
 
 const collapsed = ref(false);
 const selectedKey = ref(defaultRoute);

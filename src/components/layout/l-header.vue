@@ -32,7 +32,7 @@
             placement="bottom-end"
             trigger="hover"
             size="large"
-            :options="options"
+            :options="rightMenus($t)"
             :show-arrow="true"
             @select="onDropdownSelected"
           >
@@ -46,9 +46,18 @@
 
         <n-divider vertical />
         <n-space class="row f-end a-center">
-          <n-badge :value="info.messageNum">
-            <n-avatar round size="small" :src="info.avatar"></n-avatar>
-          </n-badge>
+          <n-dropdown
+            placement="bottom-end"
+            trigger="hover"
+            size="large"
+            :options="personalMenus($t)"
+            :show-arrow="true"
+            @select="onDropdownSelected"
+          >
+            <n-badge :value="info.messageNum">
+              <n-avatar round size="small" :src="info.avatar"></n-avatar>
+            </n-badge>
+          </n-dropdown>
         </n-space>
       </section>
     </header>
@@ -62,84 +71,22 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { h } from "vue";
 import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 import SvgIcon from "@/components/svg.vue";
 import { APP_NAME } from "@/utils/constant";
+import { rightMenus, personalMenus } from "@/utils/menu";
 import { useUserStore, useHostsStore, useSettingsStore } from "@/store";
+const router = useRouter();
 const store = useSettingsStore();
 const userStore = useUserStore();
-const { show: showAddHosts } = useHostsStore();
 const { settings } = storeToRefs(store);
+const { show: showAddHosts } = useHostsStore();
 const { isLogin, info } = storeToRefs(userStore);
 const emits = defineEmits<{
   (event: "onSettting"): void;
   (event: "onAddHosts"): void;
 }>();
-
-const options = [
-  {
-    label: "主页",
-    key: "home",
-    icon() {
-      return h(SvgIcon, { name: "home", size: "16px" });
-    },
-  },
-  {
-    label: "关于",
-    key: "about",
-    icon() {
-      return h(SvgIcon, { name: "about", size: "16px" });
-    },
-  },
-  { type: "divider" },
-  {
-    label: "检查更新",
-    key: "outdated",
-    icon() {
-      return h(SvgIcon, { name: "updated", size: "16px" });
-    },
-  },
-  {
-    label: "意见反馈",
-    key: "issues",
-    icon() {
-      return h(SvgIcon, { name: "issues", size: "16px" });
-    },
-  },
-  { type: "divider" },
-  {
-    label: "偏好设置",
-    key: "settings",
-    icon() {
-      return h(SvgIcon, { name: "settings", size: "16px" });
-    },
-  },
-  {
-    label: "导出",
-    key: "export",
-    disabled: true,
-    icon() {
-      return h(SvgIcon, { name: "export", size: "16px" });
-    },
-  },
-  {
-    label: "从本地导入",
-    key: "import-local",
-    disabled: true,
-    icon() {
-      return h(SvgIcon, { name: "import", size: "16px" });
-    },
-  },
-  {
-    label: "从远程导入",
-    key: "import-remote",
-    disabled: true,
-    icon() {
-      return h(SvgIcon, { name: "import-remote", size: "16px" });
-    },
-  },
-];
 
 /**
  * methods
@@ -164,10 +111,22 @@ const onDropdownSelected = (event: any) => {
       store.show();
       emits("onSettting");
       break;
+    case "quit":
+      clearLoginInfo();
+      break;
 
     default:
       break;
   }
+};
+
+const clearLoginInfo = () => {
+  window.sessionStorage.removeItem(APP_NAME);
+  userStore.setLogin(false);
+  userStore.clearUserInfo();
+  router.replace({
+    name: "Login",
+  });
 };
 
 const onAddHosts = () => {

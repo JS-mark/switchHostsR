@@ -14,6 +14,7 @@ const i18n = createI18n({
   locale: "zh-cn",
   messages,
 });
+
 export type Lang = keyof typeof messages;
 
 /**
@@ -31,5 +32,7 @@ export const useLanguages = () => {
     { label: "日本語", key: "ja" },
   ];
 };
+
+export type TFn = typeof i18n.global.t;
 
 export default i18n;
