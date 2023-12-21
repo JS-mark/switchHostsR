@@ -1,3 +1,18 @@
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+
+export default defineComponent({
+  name: 'EditPage',
+  setup() {
+    const content = ref('')
+    return {
+      useFormat: true,
+      content,
+    }
+  },
+})
+</script>
+
 <template>
   <editor v-model="content" :format="useFormat" class="editor" />
 </template>
@@ -7,17 +22,3 @@
   width 100%
   height 100%
 </style>
-
-<script lang="ts">
-import { ref, defineComponent } from "vue";
-export default defineComponent({
-  name: "EditPage",
-  setup() {
-    const content = ref("");
-    return {
-      useFormat: true,
-      content,
-    };
-  },
-});
-</script>

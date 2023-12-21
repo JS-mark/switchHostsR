@@ -1,6 +1,6 @@
 export const HOSTS = {
-  mac: "/etc/hosts ",
-  linux: "/etc/hosts ",
-};
+  mac: '/etc/hosts ',
+  linux: '/etc/hosts ',
+}
 
-export const APP_NAME = "SwitchHostsR";
+export const APP_NAME = 'SwitchHostsR'

@@ -1,3 +1,22 @@
+<script lang="ts">
+import { defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
+
+export default defineComponent({
+  setup() {
+    const router = useRouter()
+
+    return {
+      goHome: () => {
+        router.replace({
+          name: 'Home',
+        })
+      },
+    }
+  },
+})
+</script>
+
 <template>
   <div class="error-main box">
     <svg-icon name="404" size="300px" />
@@ -9,24 +28,6 @@
     </n-button>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-import { useRouter } from "vue-router";
-
-export default defineComponent({
-  setup() {
-    const router = useRouter();
-
-    return {
-      goHome: () => {
-        router.replace({
-          name: "Home",
-        });
-      },
-    };
-  },
-});
-</script>
 
 <style scope lang="stylus">
 .error-main

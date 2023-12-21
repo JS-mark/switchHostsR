@@ -1,57 +1,58 @@
-<template>
-  <div class="form"></div>
-  <!-- footer -->
-  <section class="row f-end a-center">
-    <n-space class="user-control a-center">
-      <slot name="control"></slot>
-      <!-- 取消 -->
-      <n-button strong secondary type="error" @click="cancel">
-        {{ $t("cancel") }}
-      </n-button>
-      <!-- 确认 -->
-      <n-button @click="confirm" strong secondary type="primary">
-        {{ $t("confirm") }}
-      </n-button>
-    </n-space>
-  </section>
-</template>
-
 <script lang="ts">
 /**
  * 命令设置
  */
 export default {
-  name: "CMD",
-};
+  name: 'CMD',
+}
 </script>
 
 <script lang="ts" setup>
-import { useMessage } from "naive-ui";
-import { useI18n } from "vue-i18n";
-import { reactive, onBeforeMount } from "vue";
-import { useSettingsStore, SettingSpace } from "@/store/useSettings";
-const store = useSettingsStore();
-const message = useMessage();
-const { t } = useI18n();
+import { useMessage } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+import { onBeforeMount, reactive } from 'vue'
+import type { SettingSpace } from '@/store/useSettings'
+import { useSettingsStore } from '@/store/useSettings'
+
+const store = useSettingsStore()
+const message = useMessage()
+const { t } = useI18n()
 const model = reactive<SettingSpace.Cmd>({
-  cmd: "",
-});
+  cmd: '',
+})
 
 onBeforeMount(() => {
-  for (const [key, value] of Object.entries(store.cmd)) {
-    Reflect.set(model, key, value);
-  }
-});
+  for (const [key, value] of Object.entries(store.cmd))
+    Reflect.set(model, key, value)
+})
 
-const confirm = () => {
-  cancel();
-  store.setSettingsByData({ cmd: model });
-  message.success(t("cmd.successTip"));
-};
-const cancel = () => {
-  store.hide();
-};
+function confirm() {
+  cancel()
+  store.setSettingsByData({ cmd: model })
+  message.success(t('cmd.successTip'))
+}
+function cancel() {
+  store.hide()
+}
 </script>
+
+<template>
+  <div class="form" />
+  <!-- footer -->
+  <section class="row f-end a-center">
+    <n-space class="user-control a-center">
+      <slot name="control" />
+      <!-- 取消 -->
+      <n-button strong secondary type="error" @click="cancel">
+        {{ $t("cancel") }}
+      </n-button>
+      <!-- 确认 -->
+      <n-button strong secondary type="primary" @click="confirm">
+        {{ $t("confirm") }}
+      </n-button>
+    </n-space>
+  </section>
+</template>
 
 <style lang="stylus" scoped>
 .form

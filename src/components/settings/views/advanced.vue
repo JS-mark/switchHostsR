@@ -1,3 +1,62 @@
+<script lang="ts">
+/**
+ * 高级设置
+ */
+export default {
+  name: 'Advanced',
+}
+</script>
+
+<script lang="ts" setup>
+import { reactive, watchEffect } from 'vue'
+import { sendLog } from '@/utils/sendLog'
+import { APP_NAME } from '@/utils/constant'
+import { openDirectory, openFile } from '@/utils'
+import type { SettingSpace } from '@/store/useSettings'
+import { useSettingsStore } from '@/store/useSettings'
+
+const store = useSettingsStore()
+const model = reactive<SettingSpace.Advanced>({
+  canSendData: false,
+  hostsPath: '',
+  SwitchHostsRPath: '',
+})
+
+function onChecked(event: boolean) {
+  store.setCanSendData(event)
+  model.canSendData = event
+}
+
+function openFileByPath(file?: string) {
+  openFile(file)
+}
+
+function changeFile(file?: string) {
+  // 打开文件夹
+  openDirectory(file).then((res) => {
+    res
+    && store.setSettingsByData({
+      advanced: {
+        canSendData: model.canSendData,
+        hostsPath: model.hostsPath,
+        SwitchHostsRPath: `${res}/.${APP_NAME}`,
+      },
+    })
+  })
+  sendLog({
+    msg: JSON.stringify({
+      msg: '改变储存文件',
+      file,
+    }),
+  })
+}
+
+watchEffect(() => {
+  for (const [key, value] of Object.entries(store.advanced))
+    Reflect.set(model, key, value)
+})
+</script>
+
 <template>
   <section class="main">
     <!-- 标题 -->
@@ -60,65 +119,6 @@
     </div>
   </section>
 </template>
-
-<script lang="ts">
-/**
- * 高级设置
- */
-export default {
-  name: "Advanced",
-};
-</script>
-
-<script lang="ts" setup>
-import { sendLog } from "@/utils/sendLog";
-import { APP_NAME } from "@/utils/constant";
-import { reactive, watchEffect } from "vue";
-import { openFile, openDirectory } from "@/utils";
-import { useSettingsStore, SettingSpace } from "@/store/useSettings";
-
-const store = useSettingsStore();
-const model = reactive<SettingSpace.Advanced>({
-  canSendData: false,
-  hostsPath: "",
-  SwitchHostsRPath: "",
-});
-
-const onChecked = (event: boolean) => {
-  store.setCanSendData(event);
-  model.canSendData = event;
-};
-
-const openFileByPath = (file?: string) => {
-  openFile(file);
-};
-
-const changeFile = (file?: string) => {
-  // 打开文件夹
-  openDirectory(file).then((res) => {
-    res &&
-      store.setSettingsByData({
-        advanced: {
-          canSendData: model.canSendData,
-          hostsPath: model.hostsPath,
-          SwitchHostsRPath: `${res}/.${APP_NAME}`,
-        },
-      });
-  });
-  sendLog({
-    msg: JSON.stringify({
-      msg: "改变储存文件",
-      file,
-    }),
-  });
-};
-
-watchEffect(() => {
-  for (const [key, value] of Object.entries(store.advanced)) {
-    Reflect.set(model, key, value);
-  }
-});
-</script>
 
 <style lang="stylus" scoped>
 .main

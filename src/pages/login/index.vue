@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="main-login">
     <video
       class="video"
       :controls="false"
@@ -30,13 +30,14 @@
             <n-form-item :label="$t('login.account')" path="account">
               <n-input
                 v-model:value="data.account"
-                :placeholder="$t('请输入账号')"
+                :placeholder="placeholder"
+                @keydown.enter="login"
               />
             </n-form-item>
             <n-form-item :label="$t('来源')" path="userMode">
               <n-select
                 v-model:value="data.userMode"
-                :placeholder="$t('请输入账号')"
+                :placeholder="placeholder"
                 :options="userModeList"
               />
             </n-form-item>
@@ -46,6 +47,7 @@
               type="primary"
               dashed
               @click="login"
+              @keydown.enter="login"
             >
               {{ isLogin ? $t("Logged") : $t("login.btn") }}
             </n-button>
@@ -57,20 +59,14 @@
 </template>
 
 <script lang="ts">
-import {
-  ref,
-  computed,
-  reactive,
-  defineComponent,
-  onBeforeMount,
-  onBeforeUnmount,
-} from "vue";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { getUser } from "@/apis/user";
 import { useRouter } from "vue-router";
-import { UserMode, useUserStore } from "@/store";
+import { User, UserMode, useUserStore } from "@/store";
 import { useMessage, type FormInst } from "naive-ui";
+import { ref, computed, reactive, defineComponent } from "vue";
+import { handerUserInfoByGithub, handerUserInfoByWeibo } from "@/utils";
 
 export default defineComponent({
   name: "Login",
@@ -96,6 +92,19 @@ export default defineComponent({
       return locale.value;
     });
 
+    const placeholder = computed(() => {
+      const mode = data.userMode
+      switch (mode) {
+        case "github":
+          return t('请输入github账号')
+        case "weibo":
+          return t('请输入微博UID')
+
+        default:
+          break;
+      }
+    })
+
     const login = (event: MouseEvent) => {
       loading.value = true;
       event.preventDefault();
@@ -106,13 +115,18 @@ export default defineComponent({
           getUserInfo(data.account)
             .then((res: any) => {
               message.success("登录成功");
-              const resData = {
-                nickname: res.name,
-                messageNum: res.followers,
-                avatar: res.avatar_url,
-                email: res.email,
-                home: res.html_url,
-              };
+              let resData: User = {};
+              switch (data.userMode) {
+                case "github":
+                  resData = handerUserInfoByGithub(res);
+                  break;
+                case "weibo":
+                  resData = handerUserInfoByWeibo(res);
+                  break;
+
+                default:
+                  break;
+              }
               setLogin(true);
               setMode(data.userMode);
               setUserInfo(resData);
@@ -133,46 +147,13 @@ export default defineComponent({
       });
     };
 
-    const onResize = () => {
-      const windowWidth = document.body.clientWidth;
-      const windowHeight = document.body.clientHeight;
-      const windowAspectRatio = windowHeight / windowWidth;
-      let videoWidth;
-      let videoHeight;
-      if (windowAspectRatio < 0.5625) {
-        videoWidth = windowWidth;
-        videoHeight = videoWidth * 0.5625;
-        videoStyle.value = {
-          height: windowWidth * 0.5625 + "px",
-          width: windowWidth + "px",
-          "margin-bottom": (windowHeight - videoHeight) / 2 + "px",
-          "margin-left": "initial",
-        };
-      } else {
-        videoHeight = windowHeight;
-        videoWidth = videoHeight / 0.5625;
-        videoStyle.value = {
-          height: windowHeight + "px",
-          width: windowHeight / 0.5625 + "px",
-          "margin-left": (windowWidth - videoWidth) / 2 + "px",
-          "margin-bottom": "initial",
-        };
-      }
-    };
-    onBeforeMount(() => {
-      window.addEventListener("resize", onResize);
-    });
-
-    onBeforeUnmount(() => {
-      window.removeEventListener("resize", onResize);
-    });
-
     return {
       login,
       loading,
       userInfo,
       isLogin,
       labelWidth,
+      placeholder,
       videoStyle,
       formRef,
       data,
@@ -185,7 +166,7 @@ export default defineComponent({
         {
           label: t("微博"),
           value: "weibo",
-          disabled: true,
+          disabled: false,
         },
         {
           label: "Google",
@@ -211,13 +192,14 @@ export default defineComponent({
 </script>
 
 <style lang="stylus" scoped>
-.main
+.main-login
   width 100%
   height 100%
+  position relative
   background-color rgba(0, 0, 0, .3)
 
   & .content
-    width 500px
+    width 600px
     left 50%
     top 50%
     transform translate(-50%, -50%)
@@ -237,15 +219,12 @@ export default defineComponent({
 
   & .video
     position absolute
-    right 0
-    bottom 0
-    min-width 100%
-    min-height 100%
-    height auto
-    width auto
-    filter: blur(15px) //背景模糊设置
-    -webkit-filter: grayscale(100%)
-    filter:grayscale(100%); //背景灰度设置
+    top 0
+    left 0
+    width 100%
+    height 100%
+    object-fit cover
+    // filter: blur(2px) //背景模糊设置
 
     source
       min-width: 100%;

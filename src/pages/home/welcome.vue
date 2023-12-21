@@ -1,21 +1,30 @@
+<script lang="ts">
+import { defineComponent } from 'vue'
+import { getNowtime } from '@/utils/time'
+
+export default defineComponent({
+  name: 'Home',
+  setup() {
+    const clock = getNowtime()
+
+    return {
+      clock,
+    }
+  },
+})
+</script>
+
 <template>
   <div class="clock">
     <svg-icon name="logo" size="240px" />
-    <p class="date">{{ clock.date }}</p>
-    <p class="time">{{ clock.time }}</p>
+    <p class="date">
+      {{ clock.date }}
+    </p>
+    <p class="time">
+      {{ clock.time }}
+    </p>
   </div>
 </template>
-
-<script lang="ts">
-export default {
-  name: "Home",
-};
-</script>
-
-<script setup lang="ts">
-import { getNowtime } from "@/utils/time";
-const clock = getNowtime();
-</script>
 
 <style lang="less" scoped>
 .clock {

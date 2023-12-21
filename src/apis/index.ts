@@ -1,1 +1,1 @@
-import * as user from "./user";
+export * from "./user";

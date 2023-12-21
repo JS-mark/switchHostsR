@@ -1,4 +1,5 @@
-import * as tauriAPI from "@tauri-apps/api";
+import * as tauriAPI from '@tauri-apps/api'
+
 export {
   invoke,
   app,
@@ -17,7 +18,7 @@ export {
   tauri,
   event as tauriEvent,
   window as tauriWindow,
-} from "@tauri-apps/api";
+} from '@tauri-apps/api'
 
 /**
  * 动态加载库
@@ -25,6 +26,6 @@ export {
  */
 export default function initTauri() {
   return new Promise((resolve) => {
-    tauriAPI && resolve(tauriAPI);
-  });
+    tauriAPI && resolve(tauriAPI)
+  })
 }

@@ -1,16 +1,16 @@
-import { VNode } from "vue";
-import { nanoid } from "nanoid";
-import { debounce } from "lodash-es";
-import { useLocalStore } from "@/store";
-import { SettingsSharp } from "@vicons/ionicons5";
-import { type RouteRecordRaw } from "vue-router";
+import type { VNode } from 'vue'
+import { nanoid } from 'nanoid'
+import { debounce } from 'lodash-es'
+import { SettingsSharp } from '@vicons/ionicons5'
+import type { RouteRecordRaw } from 'vue-router'
+import { useLocalStore } from '@/store'
 
 export interface Options {
-  name: string;
-  title: string;
-  type: "remote" | "local";
-  icon?: VNode;
-  id?: string;
+  name: string
+  title: string
+  type: 'remote' | 'local'
+  icon?: VNode
+  id?: string
 }
 
 /**
@@ -25,27 +25,28 @@ export const addLocalHostsRoute = debounce(
     { type, id, name, icon, title }: Options,
     cb: (data?: RouteRecordRaw) => void,
   ) => {
-    const { hasHosts, create } = useLocalStore();
-    const id_ = id || nanoid();
-    const space = `${type}__${id_}`;
+    const { hasHosts, create } = useLocalStore()
+    const id_ = id || nanoid()
+    const space = `${type}__${id_}`
     if (!hasHosts(space)) {
       create(
         space,
         {
-          path: "/edit",
+          path: '/edit',
           name,
           meta: {
             icon: icon || SettingsSharp,
             title,
             hidden: false,
           },
-          redirect: "",
+          redirect: '',
         },
         cb,
-      );
-    } else {
-      cb();
+      )
+    }
+    else {
+      cb()
     }
   },
   300,
-);
+)

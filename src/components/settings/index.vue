@@ -1,10 +1,53 @@
+<script lang="ts">
+export default {
+  name: 'Settings',
+}
+</script>
+
+<script lang="ts" setup>
+import { storeToRefs } from 'pinia'
+
+import { onBeforeMount, ref, watchEffect } from 'vue'
+import Cmd from './views/cmd.vue'
+import Proxy from './views/proxy.vue'
+import General from './views/general.vue'
+import Advanced from './views/advanced.vue'
+import { getUserInfo } from '@/utils/index'
+import { useSettingsStore } from '@/store/useSettings'
+import { APP_NAME } from '@/utils/constant'
+
+const showModal = ref(false)
+const store = useSettingsStore()
+const { isShowSettings } = storeToRefs(store)
+
+function onClose() {
+  store.hide()
+}
+
+onBeforeMount(async () => {
+  const data = await getUserInfo()
+  store.setSettingsByData(
+    {
+      user: data,
+      advanced: {
+        hostsPath: `${data.home}/.${APP_NAME}`,
+      },
+    },
+    false,
+  )
+})
+watchEffect(() => {
+  showModal.value = isShowSettings.value
+})
+</script>
+
 <template>
   <n-modal
     v-model:show="showModal"
     preset="card"
     :title="$t('偏好设置')"
     :bordered="false"
-    :size="'medium'"
+    size="medium"
     style="width: 600px"
     transform-origin="center"
     :on-close="onClose"
@@ -23,65 +66,23 @@
     >
       <!-- 通用 -->
       <n-tab-pane name="general" :tab="$t('general')">
-        <general />
+        <General />
       </n-tab-pane>
       <!-- 命令 -->
       <n-tab-pane name="cmd" :tab="$t('order')">
-        <cmd />
+        <Cmd />
       </n-tab-pane>
       <!-- 代理 -->
       <n-tab-pane name="proxy" :tab="$t('proxy')">
-        <proxy />
+        <Proxy />
       </n-tab-pane>
       <!-- 高级 -->
       <n-tab-pane name="advanced" :tab="$t('advanced')">
-        <advanced />
+        <Advanced />
       </n-tab-pane>
     </n-tabs>
   </n-modal>
 </template>
-
-<script lang="ts">
-export default {
-  name: "Settings",
-};
-</script>
-
-<script lang="ts" setup>
-import { storeToRefs } from "pinia";
-import { getUserInfo } from "@/utils/index";
-
-import { ref, watchEffect, onBeforeMount } from "vue";
-import Cmd from "./views/cmd.vue";
-import Proxy from "./views/proxy.vue";
-import General from "./views/general.vue";
-import Advanced from "./views/advanced.vue";
-import { useSettingsStore } from "@/store/useSettings";
-import { APP_NAME } from "@/utils/constant";
-const showModal = ref(false);
-const store = useSettingsStore();
-const { isShowSettings } = storeToRefs(store);
-
-const onClose = () => {
-  store.hide();
-};
-
-onBeforeMount(async () => {
-  const data = await getUserInfo();
-  store.setSettingsByData(
-    {
-      user: data,
-      advanced: {
-        hostsPath: `${data.home}/.${APP_NAME}`,
-      },
-    },
-    false,
-  );
-});
-watchEffect(() => {
-  showModal.value = isShowSettings.value;
-});
-</script>
 
 <style lang="stylus" scoped>
 .main-modal

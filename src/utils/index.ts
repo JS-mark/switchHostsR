@@ -1,77 +1,78 @@
-import { User } from "@/store";
-import { urlAlphabet, customAlphabet } from "nanoid";
-import { useJSBridge, SYSTEM_ENV } from "@/plugins/Bridge";
-import { APP_NAME } from "./constant";
+import { customAlphabet, urlAlphabet } from 'nanoid'
+import { APP_NAME } from './constant'
+import type { User } from '@/store'
+import { SYSTEM_ENV, useJSBridge } from '@/plugins/Bridge'
 
-export const getRandID = customAlphabet(urlAlphabet, 16);
+export const getRandID = customAlphabet(urlAlphabet, 16)
 
-export const env = window.utools ? SYSTEM_ENV.UTOOLS : SYSTEM_ENV.TAURI;
+export const env = window.utools ? SYSTEM_ENV.UTOOLS : SYSTEM_ENV.TAURI
 
-export const { useBridge } = useJSBridge();
+export const { useBridge } = useJSBridge()
 
 /**
  * 获取系统信息
  * @returns
  */
-export const getSystemInfo = () => {
+export function getSystemInfo() {
   return {
     ua: window.navigator.userAgent,
-  };
-};
+  }
+}
 
 /**
  * 打开文件
  * @param file
  */
-export const openFile = (file?: string) => {
-  if (!file) return;
+export function openFile(file?: string) {
+  if (!file)
+    return
   if (env === SYSTEM_ENV.UTOOLS) {
     useBridge((bridge) => {
-      bridge.shellShowItemInFolder(file);
-    });
+      bridge.shellShowItemInFolder(file)
+    })
   }
 
   if (env === SYSTEM_ENV.TAURI) {
     useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-      bridge("openFile", {
+      bridge('openFile', {
         file,
-      });
-    });
+      })
+    })
   }
-};
+}
 
 /**
  * 打开文件夹
  * @param file
  */
-export const openDirectory = (file?: string) => {
+export function openDirectory(file?: string) {
   return new Promise((resolve) => {
     if (env === SYSTEM_ENV.UTOOLS) {
       useBridge((bridge) => {
         const paths = bridge.showOpenDialog({
-          title: "选择储存数据文件夹",
-          defaultPath: file || bridge.getPath("home"),
-          properties: ["openDirectory"],
-        });
-        resolve(paths && paths[0]);
-      });
+          title: '选择储存数据文件夹',
+          defaultPath: file || bridge.getPath('home'),
+          properties: ['openDirectory'],
+        })
+        resolve(paths && paths[0])
+      })
     }
 
     if (env === SYSTEM_ENV.TAURI) {
       useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-        bridge("openDirectory", {
+        bridge('openDirectory', {
           file,
         }).then((res) => {
-          resolve(res);
-        });
-      });
+          resolve(res)
+        })
+      })
     }
-  });
-};
+  })
+}
 
 interface UserInfo extends User {
-  ua: string;
-  home: string;
+  ua: string
+  home: string
 }
 
 /**
@@ -79,48 +80,78 @@ interface UserInfo extends User {
  * @param name
  * @returns
  */
-export const getLoginUser = () => {
-  const data = window.sessionStorage.getItem(APP_NAME);
-  return data ? JSON.parse(decodeURIComponent(window.atob(data))) : null;
-};
+export function getLoginUser() {
+  const data = window.sessionStorage.getItem(APP_NAME)
+  return data ? JSON.parse(decodeURIComponent(window.atob(data))) : null
+}
 
 /**
  * 获取用户信息
  * @param file
  */
-export const getUserInfo = (): Promise<UserInfo> => {
+export function getUserInfo(): Promise<UserInfo> {
   return new Promise((resolve) => {
     if (env === SYSTEM_ENV.UTOOLS) {
       useBridge((bridge) => {
-        const user = bridge.getUser();
+        const user = bridge.getUser()
         resolve({
           ua: window.navigator.userAgent,
-          home: bridge.getPath("home"),
+          home: bridge.getPath('home'),
           ...user,
-        });
-      });
+        })
+      })
     }
 
     if (env === SYSTEM_ENV.TAURI) {
       useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-        bridge("getUserInfo").then((res: any) => {
+        bridge('getUserInfo').then((res: any) => {
           resolve({
             ua: window.navigator.userAgent,
             home: res.home,
             ...res.user,
-          });
-        });
-      });
+          })
+        })
+      })
     }
-  });
-};
+  })
+}
 /**
  * 获取类型
  * @param o
  * @returns type
  */
-export const getType = (o: unknown): string => {
-  const s: string = Object.prototype.toString.call(o);
-  const s_ = s.match(/\[object (.*)\]/) as RegExpMatchArray;
-  return s_[1].toLowerCase();
-};
+export function getType(o: unknown): string {
+  const s: string = Object.prototype.toString.call(o)
+  const s_ = s.match(/\[object (.*)\]/) as RegExpMatchArray
+  return s_[1].toLowerCase()
+}
+
+/**
+ * 处理微博用户信息
+ * @param data
+ * @returns
+ */
+export function handerUserInfoByWeibo(data: any) {
+  return {
+    avatar: data.profile_image_url,
+    nickname: data.screen_name,
+    messageNUm: data.friends_count,
+    home: `https://weibo.com/u/${data.id}`,
+    extend: data,
+  }
+}
+
+/**
+ * 处理github用户信息
+ * @param data
+ * @returns
+ */
+export function handerUserInfoByGithub(data: any) {
+  return {
+    avatar: data.avatar_url,
+    nickname: data.name,
+    messageNUm: data.followers,
+    home: data.html_url,
+    extend: data,
+  }
+}

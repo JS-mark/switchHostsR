@@ -6,10 +6,10 @@
  * @Description: mitt
  */
 
-import mitt from "mitt";
-import { type RouteRecordRaw } from "vue-router";
+import mitt from 'mitt'
+import type { RouteRecordRaw } from 'vue-router'
 
 export default mitt<{
-  [key: string]: any;
-  onRestoreHistoryRoute: RouteRecordRaw[];
-}>();
+  [key: string]: any
+  onRestoreHistoryRoute: RouteRecordRaw[]
+}>()

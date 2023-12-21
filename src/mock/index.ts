@@ -1,10 +1,11 @@
-import { create, router as _router, defaults } from "json-server";
-const server = create();
-const router = _router("db.json");
-const middlewares = defaults();
+import { router as _router, create, defaults } from 'json-server'
 
-server.use(middlewares);
-server.use(router);
+const server = create()
+const router = _router('db.json')
+const middlewares = defaults()
+
+server.use(middlewares)
+server.use(router)
 server.listen(3000, () => {
-  console.log("JSON Server is running");
-});
+  console.warn('JSON Server is running')
+})

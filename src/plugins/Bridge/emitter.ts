@@ -1,12 +1,14 @@
-import mitt, { EventType, Handler } from "mitt";
+import type { EventType, Handler } from 'mitt'
+import mitt from 'mitt'
+
 export namespace Bridge {
-  export type Events<T = unknown> = Record<EventType, T>;
+  export type Events<T = unknown> = Record<EventType, T>
 }
 
 export default class Emitter {
   private emitter = mitt<{
-    [key: keyof Bridge.Events]: any;
-  }>();
+    [key: keyof Bridge.Events]: any
+  }>()
 
   /**
    * on
@@ -17,7 +19,7 @@ export default class Emitter {
     type: Key,
     handler: Handler<Bridge.Events[Key]>,
   ) {
-    this.emitter.on(type, handler);
+    this.emitter.on(type, handler)
   }
 
   /**
@@ -29,8 +31,8 @@ export default class Emitter {
     type: Key,
     handler: Handler<Bridge.Events[Key]>,
   ) {
-    this.emitter.on(type, handler);
-    this.emitter.off(type, handler);
+    this.emitter.on(type, handler)
+    this.emitter.off(type, handler)
   }
 
   /**
@@ -42,7 +44,7 @@ export default class Emitter {
     type: Key,
     handler?: Handler<Bridge.Events[Key]>,
   ) {
-    this.emitter.off(type, handler);
+    this.emitter.off(type, handler)
   }
 
   /**
@@ -51,6 +53,6 @@ export default class Emitter {
    * @param event
    */
   emit<Key extends keyof Bridge.Events>(type: Key, event: Bridge.Events[Key]) {
-    this.emitter.emit(type, event);
+    this.emitter.emit(type, event)
   }
 }

@@ -2,59 +2,60 @@
  * @Author: Mark
  * @Date: 2021-11-08 16:30:38
  * @LastEditors: Mark
- * @LastEditTime: 2023-05-31 10:54:11
+ * @LastEditTime: 2023-12-21 18:03:22
  * @Description: fetch 类
  */
+import type {
+  ConfigProviderProps,
+} from 'naive-ui'
 import {
+  createDiscreteApi,
   darkTheme,
   lightTheme,
-  createDiscreteApi,
-  ConfigProviderProps,
-} from "naive-ui";
-import axios from "axios";
-import { computed, ref } from "vue";
-import Request, { type ReqOptions } from "./request";
+} from 'naive-ui'
+import axios from 'axios'
+import { computed, ref } from 'vue'
+import Request, { type ReqOptions } from './request'
 
-const themeRef = ref<"light" | "dark">("light");
+const themeRef = ref<'light' | 'dark'>('light')
 const configProviderPropsRef = computed<ConfigProviderProps>(() => ({
-  theme: themeRef.value === "light" ? lightTheme : darkTheme,
-}));
+  theme: themeRef.value === 'light' ? lightTheme : darkTheme,
+}))
 
 const { notification, loadingBar } = createDiscreteApi(
-  ["message", "notification", "loadingBar"],
+  ['message', 'notification', 'loadingBar'],
   {
     configProviderProps: configProviderPropsRef,
   },
-);
+)
 
 axios.interceptors.response.use(
   (response) => {
-    const rid = response.config.headers["sn-reqid"] || "";
+    const rid = response.config.headers['sn-reqid'] || ''
 
     if (response.data) {
-      if (typeof response.data === "object") {
-        response.data._rid = rid;
-      }
+      if (typeof response.data === 'object')
+        response.data._rid = rid
     }
-    loadingBar.finish();
-    return response;
+    loadingBar.finish()
+    return response
   },
   (error) => {
-    loadingBar.error();
-    return Promise.reject(error.response || error);
+    loadingBar.error()
+    return Promise.reject(error.response || error)
   },
-);
+)
 
 axios.interceptors.request.use(
   (configData) => {
-    loadingBar.start();
-    return configData;
+    loadingBar.start()
+    return configData
   },
   (error) => {
-    loadingBar.error();
-    return Promise.reject(error);
+    loadingBar.error()
+    return Promise.reject(error)
   },
-);
+)
 
 /**
  * timeout 3s
@@ -67,7 +68,7 @@ class H5Request extends Request {
       timeout: 15,
     },
   ) {
-    super(options);
+    super(options)
   }
 
   /**
@@ -79,37 +80,38 @@ class H5Request extends Request {
    * @returns
    */
   request(
-    method: ReqOptions["method"],
-    options: ReqOptions["options"],
-    config: ReqOptions["config"] = { online: true, test: false, mock: false },
+    method: ReqOptions['method'],
+    options: ReqOptions['options'],
+    config: ReqOptions['config'] = { online: true, test: false, mock: false },
   ) {
-    if (!method) {
-      throw new Error("请填写请求方法");
-    }
-    const method_ = method.toLowerCase();
-    if (!["post", "get"].includes(method_)) {
-      throw new Error("不支持的请求类型！");
-    }
-    const _rid = this.getRid();
+    if (!method)
+      throw new Error('请填写请求方法')
+
+    const method_ = method.toLowerCase()
+    if (!['post', 'get'].includes(method_))
+      throw new Error('不支持的请求类型！')
+
+    const _rid = this.getRid()
     // 重写请求方法
-    options.method = method_ as ReqOptions["method"];
-    options.url = this.getURl(config, options.url);
-    if (options.data) {
-      options.data._rid = _rid;
-    } else {
-      options.data = { _rid };
-    }
-    if (method_ === "get") {
-      options.params = options.data;
-      // @ts-ignore
-      delete options.data;
+    options.method = method_ as ReqOptions['method']
+    options.url = this.getURl(config, options.url)
+    if (options.data)
+      options.data._rid = _rid
+
+    else
+      options.data = { _rid }
+
+    if (method_ === 'get') {
+      options.params = options.data
+      // @ts-expect-error
+      delete options.data
     }
 
-    if (method_ === "post") {
+    if (method_ === 'post') {
       options.data = Object.keys(options.data).reduce((obj, key) => {
-        obj.append(key, options.data[key]);
-        return obj;
-      }, new URLSearchParams());
+        obj.append(key, options.data[key])
+        return obj
+      }, new URLSearchParams())
     }
 
     return axios({
@@ -118,10 +120,11 @@ class H5Request extends Request {
     })
       .then((res) => {
         if (Number(res.status) === 200 && res.data) {
-          return Promise.resolve(res.data);
-        } else {
-          notification.error(res.data.msg || "请求错误");
-          return Promise.reject({ retry: true, res });
+          return Promise.resolve(res.data)
+        }
+        else {
+          notification.error(res.data.msg || '请求错误')
+          return Promise.reject({ retry: true, res })
         }
       })
       .catch((err) => {
@@ -130,11 +133,11 @@ class H5Request extends Request {
             axios({
               ...options,
               timeout: this.timeout * 1000,
-            }),
-          );
-        } else return Promise.reject(err);
-      });
+            }))
+        }
+        else { return Promise.reject(err) }
+      })
   }
 }
 
-export default new H5Request();
+export default new H5Request()

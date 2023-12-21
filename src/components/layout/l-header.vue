@@ -1,17 +1,88 @@
+<script lang="ts">
+export default {
+  name: 'LHeader',
+}
+</script>
+
+<script lang="ts" setup>
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+import SvgIcon from '@/components/svg.vue'
+import { APP_NAME } from '@/utils/constant'
+import { personalMenus, rightMenus } from '@/utils/menu'
+import { useHostsStore, useSettingsStore, useUserStore } from '@/store'
+
+const emits = defineEmits<{
+  (event: 'onSettting'): void
+  (event: 'onAddHosts'): void
+}>()
+const router = useRouter()
+const store = useSettingsStore()
+const userStore = useUserStore()
+const { settings } = storeToRefs(store)
+const { show: showAddHosts } = useHostsStore()
+const { isLogin, info } = storeToRefs(userStore)
+/**
+ * methods
+ */
+
+function onDropdownSelected(event: any) {
+  switch (event) {
+    case 'home':
+      window.open('https://js-mark.com/mfe-helper')
+      break
+    case 'about':
+      window.open('https://js-mark.com/mfe-helper')
+      break
+    case 'issues':
+      window.open('https://github.com/JS-mark/mfe-helper/issues')
+      break
+    case 'outdated':
+      window.open('https://github.com/JS-mark/mfe-helper')
+      break
+    case 'settings':
+      // 展示设置
+      store.show()
+      emits('onSettting')
+      break
+    case 'quit':
+      clearLoginInfo()
+      break
+
+    default:
+      break
+  }
+}
+
+function clearLoginInfo() {
+  window.sessionStorage.removeItem(APP_NAME)
+  userStore.setLogin(false)
+  userStore.clearUserInfo()
+  router.replace({
+    name: 'Login',
+  })
+}
+
+function onAddHosts() {
+  showAddHosts({ mode: 'create', settings: settings.value })
+  emits('onAddHosts')
+}
+</script>
+
 <template>
   <n-layout-header bordered>
     <header class="header row f-between a-center">
       <section row>
         <n-space class="row a-center">
-          <svg-icon name="logo-header" size="35px"></svg-icon>
+          <SvgIcon name="logo-header" size="35px" />
           <span class="logo-name">{{ APP_NAME }}</span>
         </n-space>
       </section>
       <section class="row f-center a-center">
         <n-space class="user-control a-center">
-          <slot name="control"></slot>
+          <slot name="control" />
           <!-- 添加 -->
-          <n-tooltip trigger="hover" v-if="isLogin">
+          <n-tooltip v-if="isLogin" trigger="hover">
             <template #trigger>
               <n-button
                 strong
@@ -21,7 +92,7 @@
                 @click="onAddHosts"
               >
                 <template #icon>
-                  <svg-icon name="plus" size="16px"></svg-icon>
+                  <SvgIcon name="plus" size="16px" />
                 </template>
               </n-button>
             </template>
@@ -38,7 +109,7 @@
           >
             <n-button strong secondary circle type="info">
               <template #icon>
-                <svg-icon name="settings" size="16px"></svg-icon>
+                <SvgIcon name="settings" size="16px" />
               </template>
             </n-button>
           </n-dropdown>
@@ -55,7 +126,7 @@
             @select="onDropdownSelected"
           >
             <n-badge :value="info.messageNum">
-              <n-avatar round size="small" :src="info.avatar"></n-avatar>
+              <n-avatar round size="small" :src="info.avatar" />
             </n-badge>
           </n-dropdown>
         </n-space>
@@ -63,77 +134,6 @@
     </header>
   </n-layout-header>
 </template>
-
-<script lang="ts">
-export default {
-  name: "LHeader",
-};
-</script>
-
-<script lang="ts" setup>
-import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
-import SvgIcon from "@/components/svg.vue";
-import { APP_NAME } from "@/utils/constant";
-import { rightMenus, personalMenus } from "@/utils/menu";
-import { useUserStore, useHostsStore, useSettingsStore } from "@/store";
-const router = useRouter();
-const store = useSettingsStore();
-const userStore = useUserStore();
-const { settings } = storeToRefs(store);
-const { show: showAddHosts } = useHostsStore();
-const { isLogin, info } = storeToRefs(userStore);
-const emits = defineEmits<{
-  (event: "onSettting"): void;
-  (event: "onAddHosts"): void;
-}>();
-
-/**
- * methods
- */
-
-const onDropdownSelected = (event: any) => {
-  switch (event) {
-    case "home":
-      window.open("https://js-mark.com/mfe-helper");
-      break;
-    case "about":
-      window.open("https://js-mark.com/mfe-helper");
-      break;
-    case "issues":
-      window.open("https://github.com/JS-mark/mfe-helper/issues");
-      break;
-    case "outdated":
-      window.open("https://github.com/JS-mark/mfe-helper");
-      break;
-    case "settings":
-      // 展示设置
-      store.show();
-      emits("onSettting");
-      break;
-    case "quit":
-      clearLoginInfo();
-      break;
-
-    default:
-      break;
-  }
-};
-
-const clearLoginInfo = () => {
-  window.sessionStorage.removeItem(APP_NAME);
-  userStore.setLogin(false);
-  userStore.clearUserInfo();
-  router.replace({
-    name: "Login",
-  });
-};
-
-const onAddHosts = () => {
-  showAddHosts({ mode: "create", settings: settings.value });
-  emits("onAddHosts");
-};
-</script>
 
 <style lang="stylus" scoped>
 .header

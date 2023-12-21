@@ -93,4 +93,6 @@ export default {
   分钟: "{m}  minute",
   小时: "{s}  hour",
   天: "{d} day",
+  请输入github账号: "Please enter your github account number",
+  请输入微博UID: "Please enter Weibo UID"
 };
