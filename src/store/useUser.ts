@@ -35,11 +35,11 @@ export const useUserStore = defineStore('user', {
     clearUserInfo() {
       this.mode = ''
       this.info = {
-        nickname: '',
         email: '',
-        home: '',
-        avatar: '',
-        messageNum: 0,
+        avatar: 'https://avatars.githubusercontent.com/u/31335385?v=4',
+        home: 'https://github.com/JS-mark',
+        messageNum: 18,
+        nickname: '圣痕',
       }
     },
     setMode(mode: UserMode) {
@@ -52,14 +52,16 @@ export const useUserStore = defineStore('user', {
     },
     /**
      * 设置用户数据
-     * @param content
-     * @returns
+     * @param data
+     * @returns { void }
      */
     setUserInfo(data: User) {
       if (!data || isEmpty(data))
         return
       for (const [key, value] of Object.entries(data))
         set(this.info, key, value)
+
+      console.log('111', data)
 
       window.sessionStorage.setItem(
         APP_NAME,

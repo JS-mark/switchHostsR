@@ -1,7 +1,8 @@
-import { h } from 'vue'
+import { defineAsyncComponent, h } from 'vue'
 import type { TFn } from '@/langs'
 import { useFeatureStore, useUserStore } from '@/store'
-import SvgIcon from '@/components/svg.vue'
+
+const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
 
 export function bottomMenus(t: TFn) {
   const store = useUserStore()

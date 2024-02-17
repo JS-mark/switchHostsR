@@ -19,7 +19,7 @@ const props = withDefaults(
   }>(),
   {
     modelValue: '',
-    language: 'shell',
+    language: 'hosts',
     preComment: '',
     format: true,
     options: () => ({}),

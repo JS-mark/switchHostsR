@@ -2,6 +2,7 @@ import type monaco from 'monaco-editor'
 import type { MessageApiInjection } from 'naive-ui/lib/message/src/MessageProvider'
 
 declare let window: Window & typeof globalThis
+declare module 'monaco-editor/esm/vs/basic-languages/_.contribution';
 
 declare global {
   interface Window {

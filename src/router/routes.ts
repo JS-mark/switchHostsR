@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { Albums, Home } from '@vicons/ionicons5'
+import { ApertureOutline, Home, ListCircle, Text } from '@vicons/ionicons5'
 import { genSidersMenus, generateRoutes, processRoutes } from './utils'
 
 export * from './utils'
@@ -24,14 +24,43 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/login/index.vue'),
   },
   {
+    path: '/hosts-list',
+    name: 'HostsList',
+    meta: {
+      title: 'Hosts列表',
+      icon: ListCircle,
+      hidden: false,
+    },
+    component: () => import('@/pages/hosts-list/index.vue'),
+  },
+  {
     path: '/about',
     name: 'About',
     meta: {
       title: '关于',
-      icon: Albums,
+      icon: Text,
       hidden: false,
     },
     component: () => import('@/pages/about/index.vue'),
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    meta: {
+      title: '超管后台',
+      icon: ApertureOutline,
+      hidden: false,
+    },
+    component: () => import('@/pages/admin/index.vue'),
+  },
+  {
+    path: '/edit/:id',
+    name: 'Edit',
+    meta: {
+      title: '编辑器',
+      hidden: true,
+    },
+    component: () => import('@/pages/edit/index.vue'),
   },
   {
     path: '/error',

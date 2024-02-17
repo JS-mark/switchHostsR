@@ -7,7 +7,7 @@ export default {
 <script lang="ts" setup>
 import { type MenuOption, NIcon } from 'naive-ui'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { h, onMounted, ref, shallowRef, watchEffect } from 'vue'
+import { defineAsyncComponent, h, onMounted, ref, shallowRef, watchEffect } from 'vue'
 import { CaretDownOutline, SettingsSharp } from '@vicons/ionicons5'
 import {
   menus as defaultMenus,
@@ -18,6 +18,7 @@ import emitter from '@/plugins/emitter'
 import { bottomMenus } from '@/utils/menu'
 import { HistoryMenus } from '@/router/history'
 
+const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
 const route = useRoute()
 const router = useRouter()
 const menus = shallowRef<MenuOption[]>(defaultMenus)
@@ -148,7 +149,7 @@ watchEffect(() => {
           class="btn" :class="[{ collapsed }]"
         >
           <template #icon>
-            <svg-icon name="settings" size="16px" />
+            <SvgIcon name="settings" size="16px" />
           </template>
           <template v-if="!collapsed">
             {{ $t("更多") }}

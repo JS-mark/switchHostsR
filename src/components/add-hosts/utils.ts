@@ -8,6 +8,7 @@ import { useLocalStore } from '@/store'
 export interface Options {
   name: string
   title: string
+  content?: string
   type: 'remote' | 'local'
   icon?: VNode
   id?: string
@@ -22,7 +23,7 @@ export interface Options {
  */
 export const addLocalHostsRoute = debounce(
   (
-    { type, id, name, icon, title }: Options,
+    { type, id, name, icon, title, content }: Options,
     cb: (data?: RouteRecordRaw) => void,
   ) => {
     const { hasHosts, create } = useLocalStore()
@@ -32,14 +33,12 @@ export const addLocalHostsRoute = debounce(
       create(
         space,
         {
-          path: '/edit',
           name,
-          meta: {
+          ext: {
+            content: content || "",
             icon: icon || SettingsSharp,
             title,
-            hidden: false,
           },
-          redirect: '',
         },
         cb,
       )

@@ -17,8 +17,9 @@ import { useSettingsStore } from '@/store/useSettings'
 const store = useSettingsStore()
 const message = useMessage()
 const { t } = useI18n()
-const model = reactive<SettingSpace.Cmd>({
+const model = reactive<SettingSpace.Cmd & { useFormat: boolean }>({
   cmd: '',
+  useFormat: true,
 })
 
 onBeforeMount(() => {
@@ -29,7 +30,7 @@ onBeforeMount(() => {
 function confirm() {
   cancel()
   store.setSettingsByData({ cmd: model })
-  message.success(t('cmd.successTip'))
+  message.success(t('更新配置成功！'))
 }
 function cancel() {
   store.hide()
@@ -37,7 +38,10 @@ function cancel() {
 </script>
 
 <template>
-  <div class="form" />
+  <div class="form">
+    <!-- shell 编辑器 -->
+    <editor v-model="model.cmd" :format="model.useFormat" language="shell" class="editor" />
+  </div>
   <!-- footer -->
   <section class="row f-end a-center">
     <n-space class="user-control a-center">

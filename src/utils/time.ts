@@ -51,3 +51,7 @@ export function getNowtime() {
   })
   return clock
 }
+
+export function formatTimeV2(time: Date | string | number, format: string) {
+  return dayjs(time).format(format)
+}

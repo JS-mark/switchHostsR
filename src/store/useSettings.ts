@@ -94,6 +94,9 @@ export const useSettingsStore = defineStore('settings', {
     },
   }),
   getters: {
+    theme(): SettingSpace.General['theme'] {
+      return this.general.theme
+    },
     canSendData(): boolean {
       return this.settings.advanced.canSendData
     },
@@ -148,5 +151,8 @@ export const useSettingsStore = defineStore('settings', {
     hide() {
       this.isShowSettings = false
     },
+  },
+  persist: {
+    enabled: true, // true 表示开启持久化保存
   },
 })

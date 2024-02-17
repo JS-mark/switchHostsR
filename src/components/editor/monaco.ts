@@ -1,12 +1,27 @@
 import 'monaco-editor/esm/vs/editor/editor.all.js'
-import 'monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js'
 import 'monaco-editor/esm/vs/basic-languages/monaco.contribution'
+import 'monaco-editor/esm/vs/basic-languages/shell/shell.contribution'
 import 'monaco-editor/esm/vs/language/json/monaco.contribution'
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import * as monaco from 'monaco-editor'
 import { useDark } from '@vueuse/core'
 import emitter from '@/plugins/emitter'
+import './languages/index'
 
 export { monaco }
+
+export function useMonacoEditor() {
+  // eslint-disable-next-line no-restricted-globals
+  self.MonacoEnvironment = {
+    getWorker(_, label) {
+      if (label === 'json')
+        return new JsonWorker()
+
+      return new EditorWorker()
+    },
+  }
+}
 
 /**
  * hook 函数
@@ -59,7 +74,7 @@ export default function useMonaco(language = 'json') {
       return
 
     initReadOnly = !!editorOption.readOnly
-    const theme = isDark.value ? 'vs-dark' : 'vs'
+    const theme = isDark.value ? 'hosts-dark' : 'hosts'
     window.__MonacoEditor
       = el
       && (monaco.editor.create(el, {

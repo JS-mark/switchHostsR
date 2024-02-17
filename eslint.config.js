@@ -14,11 +14,10 @@ export default await tm2js(
 
     // TypeScript and Vue are auto-detected, you can also explicitly enable them:
     typescript: true,
+    // 开启 vue
     vue: true,
-
-    // Disable jsonc and yaml support
-    jsonc: false,
-    yaml: false,
+    jsonc: true,
+    yaml: true,
 
     // `.eslintignore` is no longer supported in Flat config, use `ignores` instead
     ignores: [
@@ -39,17 +38,20 @@ export default await tm2js(
     rules: {
       'ts/no-unsafe-argument': 'off',
       'ts/no-namespace': 'off',
-      'ts/ban-ts-comment': 'warn',
     },
   },
   {
     // Without `files`, they are general rules for all files
     rules: {
+      'import/order': 'off',
       'style/semi': ['error', 'never'],
       'unicorn/no-new-array': 'off',
       'prefer-promise-reject-errors': 'off',
       'import/first': 'off',
-      'no-restricted-syntax': "off"
+      'ts/ban-ts-comment': 'off',
+      'no-restricted-syntax': 'off',
+      'no-console': 'off',
+      'tm2js/top-level-function': 'off',
     },
   },
 )

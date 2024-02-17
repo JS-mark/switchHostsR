@@ -50,7 +50,6 @@ function confirm() {
   cancel()
   if (store.general.language !== model.language)
     setDefaultLang(model.language)
-
   store.setSettingsByData({ general: model })
   message.success(t('更新配置成功！'))
 }

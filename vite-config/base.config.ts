@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
 import type { ConfigEnv } from 'vite'
+import WindiCSS from 'vite-plugin-windicss'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import monacoEditorPlugin from 'vite-plugin-monaco-editor'
@@ -9,6 +10,7 @@ import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 
 export function getBaseConfig(env: ConfigEnv) {
+  const prefix = `monaco-editor/esm/vs`
   // 打印环境变量
   console.warn('[ env ]', env)
   return {
@@ -32,6 +34,7 @@ export function getBaseConfig(env: ConfigEnv) {
         customDomId: '__svg__icons__dom__',
       }),
       vue(),
+      WindiCSS(),
       AutoImport({
         imports: [
           'vue',
@@ -48,7 +51,7 @@ export function getBaseConfig(env: ConfigEnv) {
       Components({
         resolvers: [NaiveUiResolver()],
       }),
-      // eslint-disable-next-line ts/ban-ts-comment
+
       // @ts-expect-error
       monacoEditorPlugin.default({}),
     ],
@@ -57,6 +60,13 @@ export function getBaseConfig(env: ConfigEnv) {
         '@': resolve(__dirname, '../src'),
         '@utils': resolve(__dirname, '../src/utils'),
       },
+    },
+
+    optimizeDeps: {
+      include: [
+        `${prefix}/language/json/json.worker`,
+        `${prefix}/editor/editor.worker`,
+      ],
     },
 
     // to make use of `TAURI_DEBUG` and other env variables

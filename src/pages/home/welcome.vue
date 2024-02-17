@@ -16,7 +16,7 @@ export default defineComponent({
 
 <template>
   <div class="clock">
-    <svg-icon name="logo" size="240px" />
+    <SvgIcon name="logo" size="240px" />
     <p class="date">
       {{ clock.date }}
     </p>

@@ -1,7 +1,10 @@
-import { customAlphabet, urlAlphabet } from 'nanoid'
 import { APP_NAME } from './constant'
-import type { User } from '@/store'
+import { customAlphabet, urlAlphabet } from 'nanoid'
 import { SYSTEM_ENV, useJSBridge } from '@/plugins/Bridge'
+
+export * from './constant'
+export * from './time'
+import type { User } from '@/store'
 
 export const getRandID = customAlphabet(urlAlphabet, 16)
 
@@ -11,7 +14,7 @@ export const { useBridge } = useJSBridge()
 
 /**
  * 获取系统信息
- * @returns
+ * @returns object { ua: string }
  */
 export function getSystemInfo() {
   return {
@@ -87,7 +90,7 @@ export function getLoginUser() {
 
 /**
  * 获取用户信息
- * @param file
+ * @returns Promise
  */
 export function getUserInfo(): Promise<UserInfo> {
   return new Promise((resolve) => {
@@ -129,7 +132,7 @@ export function getType(o: unknown): string {
 /**
  * 处理微博用户信息
  * @param data
- * @returns
+ * @returns object
  */
 export function handerUserInfoByWeibo(data: any) {
   return {
@@ -144,7 +147,7 @@ export function handerUserInfoByWeibo(data: any) {
 /**
  * 处理github用户信息
  * @param data
- * @returns
+ * @returns object
  */
 export function handerUserInfoByGithub(data: any) {
   return {

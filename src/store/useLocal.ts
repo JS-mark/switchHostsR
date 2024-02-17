@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { RouteRecordRaw } from 'vue-router'
 import emitter from '@/plugins/emitter'
 import { setHistory } from '@/router/history'
+import type { CreateLocalHostsData } from '@/types/index'
 
 export const useLocalStore = defineStore('local', {
   state: () => ({
@@ -23,14 +24,13 @@ export const useLocalStore = defineStore('local', {
      */
     create(
       space: string,
-      data: RouteRecordRaw,
+      data: CreateLocalHostsData,
       cb?: (route?: RouteRecordRaw) => void,
     ) {
       if (!space || this.hasHosts(this.getSpace(space))) {
         cb && cb()
         return
       }
-      delete data.redirect
       /**
        * Notice: 未重写类型，使用删除 `redirect` 达到目的
        */
@@ -40,13 +40,15 @@ export const useLocalStore = defineStore('local', {
         component: () => import('@/pages/edit/index.vue'),
       }
       this.hosts.set(this.getSpace(space), route)
-      setHistory(space, route)
+      // 插入数据
+      setHistory(space, data)
       // 触发事件更新
       emitter.emit('onAddRoute')
       cb && cb(route)
     },
     restore(list: { space: string, data: RouteRecordRaw }[]) {
-      const arr = list.map((item) => {
+      const arr: RouteRecordRaw[] = []
+      list.forEach((item) => {
         const { space, data } = item
         if (!space || this.hasHosts(this.getSpace(space)))
           return
@@ -61,9 +63,9 @@ export const useLocalStore = defineStore('local', {
         }
         this.hosts.set(this.getSpace(space), route)
         // 触发事件更新
-        return route
+        arr.push(route)
       })
-      emitter.emit('onRestoreHistoryRoute', arr as RouteRecordRaw[])
+      emitter.emit('onRestoreHistoryRoute', arr)
     },
     clear(space: string) {
       if (!space)
@@ -82,5 +84,8 @@ export const useLocalStore = defineStore('local', {
         return
       return this.hosts.get(`${this.name}__${space}`)
     },
+  },
+  persist: {
+    enabled: true, // true 表示开启持久化保存
   },
 })

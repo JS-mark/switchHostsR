@@ -4,6 +4,7 @@ export default {
   'confirm': '確認',
   'cancel': 'キャンセル',
   'radio': '無線',
+  'email': 'メール',
   'multiple': '複数の選択肢',
   'light': '明色',
   'dark': '暗色',
@@ -38,6 +39,10 @@ export default {
   'login': {
     btn: 'ログイン',
     account: 'アカウント',
+    nickname: 'ニックネーム',
+    email: 'メール',
+    password: 'パスワード',
+    register: 'ログイン',
   },
   '主机': 'ザ・ホスト',
   '回收站': 'ゴミ箱',

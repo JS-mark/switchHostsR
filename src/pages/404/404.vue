@@ -19,7 +19,7 @@ export default defineComponent({
 
 <template>
   <div class="error-main box">
-    <svg-icon name="404" size="300px" />
+    <SvgIcon name="404" size="300px" />
     <p class="not-found-text">
       {{ $t("你访问的页面不存在") }}
     </p>

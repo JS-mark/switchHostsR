@@ -3,21 +3,13 @@ import { useRoute } from 'vue-router'
 import { useDark } from '@vueuse/core'
 import { computed, defineComponent } from 'vue'
 import { type GlobalTheme, darkTheme } from 'naive-ui'
-import LSider from '@/components/layout/l-sider.vue'
-import LHeader from '@/components/layout/l-header.vue'
-import AddHosts from '@/components/add-hosts/index.vue'
-import Settings from '@/components/settings/index.vue'
+import { useSettingsStore } from '@/store'
 
 export default defineComponent({
   name: 'App',
-  components: {
-    LSider,
-    LHeader,
-    Settings,
-    AddHosts,
-  },
   setup() {
     const route = useRoute()
+    const settingsStore = useSettingsStore()
     const title = computed(() => {
       return route.meta.title
     })
@@ -29,7 +21,11 @@ export default defineComponent({
     })
 
     const theme = computed<GlobalTheme | null>(() => {
-      return isDark.value ? darkTheme : null
+      if (settingsStore.theme === 'auto')
+        return isDark.value ? darkTheme : null
+      if (settingsStore.theme === 'black')
+        return darkTheme
+      return null
     })
 
     const isShowHeader = computed(
@@ -48,7 +44,7 @@ export default defineComponent({
 <template>
   <n-config-provider :theme="theme">
     <n-loading-bar-provider>
-      <n-message-provider>
+      <n-message-provider :max="1">
         <!-- 头部 -->
         <LHeader />
         <!-- 主体区域 -->
@@ -74,6 +70,8 @@ export default defineComponent({
         <AddHosts />
         <!-- 设置组件 -->
         <Settings />
+        <!-- 全屏弹窗 -->
+        <GlobalModel />
       </n-message-provider>
     </n-loading-bar-provider>
   </n-config-provider>

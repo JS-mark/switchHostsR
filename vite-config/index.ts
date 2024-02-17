@@ -1,3 +1,3 @@
 export * from './base.config'
-export * as TauriConfig from './tauri.config'
-export * as UToolConfig from './utool.config'
+export * from './tauri.config'
+export * from './utool.config'

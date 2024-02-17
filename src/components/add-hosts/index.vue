@@ -154,6 +154,7 @@ export default defineComponent({
       formRef.value?.validate((errors) => {
         if (!errors) {
           type modeType = 'remote' | 'local'
+
           addLocalHostsRoute(
             {
               name: data.model.title,

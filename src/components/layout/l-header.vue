@@ -7,7 +7,7 @@ export default {
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import SvgIcon from '@/components/svg.vue'
+import { defineAsyncComponent } from 'vue'
 import { APP_NAME } from '@/utils/constant'
 import { personalMenus, rightMenus } from '@/utils/menu'
 import { useHostsStore, useSettingsStore, useUserStore } from '@/store'
@@ -16,6 +16,7 @@ const emits = defineEmits<{
   (event: 'onSettting'): void
   (event: 'onAddHosts'): void
 }>()
+const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
 const router = useRouter()
 const store = useSettingsStore()
 const userStore = useUserStore()

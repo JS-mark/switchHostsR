@@ -1,5 +1,4 @@
-{
-  // Enable the ESlint flat config support
+{// Enable the ESlint flat config support
   "eslint.experimental.useFlatConfig": true,
 
   // Disable the default formatter, use eslint instead
@@ -14,6 +13,7 @@
   // Silent the stylistic rules in you IDE, but still auto fix them
   "eslint.rules.customizations": [
     { "rule": "style/*", "severity": "off" },
+    { "rule": "format/*", "severity": "off" },
     { "rule": "*-indent", "severity": "off" },
     { "rule": "*-spacing", "severity": "off" },
     { "rule": "*-spaces", "severity": "off" },
@@ -35,6 +35,11 @@
     "markdown",
     "json",
     "jsonc",
-    "yaml"
+    "yaml",
+    "toml"
+  ],
+  "commentTranslate.hover.enabled": true,
+  "rust-analyzer.linkedProjects": [
+    "./src-tauri/Cargo.toml"
   ]
 }
