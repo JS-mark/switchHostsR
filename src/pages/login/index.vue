@@ -4,6 +4,7 @@ import { defineComponent, reactive, ref } from 'vue'
 import { useUserStore } from '@/store'
 import Login from './login.vue'
 import Register from './register.vue'
+import ThirdLogin from './third-login.vue'
 import { mixins } from './mixins'
 
 export default defineComponent({
@@ -11,6 +12,7 @@ export default defineComponent({
   components: {
     Login,
     Register,
+    ThirdLogin,
   },
   setup() {
     const data = reactive({
@@ -28,6 +30,10 @@ export default defineComponent({
       event.reset && (data.mode = '')
     }
 
+    const onThirdLogin = (event: any) => {
+      event.reset && (data.mode = '')
+    }
+
     const switchMode = (mode: 'register' | 'login') => {
       data.mode = mode
     }
@@ -36,6 +42,7 @@ export default defineComponent({
       onLogin,
       onRegister,
       switchMode,
+      onThirdLogin,
       data,
       isLogin,
       mixins,
@@ -62,8 +69,8 @@ export default defineComponent({
       <n-card>
         <div class="login">
           <template v-if="isLogin">
-            <n-avatar round :size="120" :src="userInfo.avatar" />
-            <span class="nickname">{{ userInfo.nickname }}</span>
+            <n-avatar round :size="120" :src="userInfo.avatar_url" />
+            <span class="nickname">{{ userInfo.name }}</span>
           </template>
           <template v-else>
             <n-tabs
@@ -79,6 +86,9 @@ export default defineComponent({
               </n-tab-pane>
               <n-tab-pane name="signup" tab="注册">
                 <Register @on-callback="onRegister" />
+              </n-tab-pane>
+              <n-tab-pane name="third-login" tab="三方登录">
+                <ThirdLogin @on-callback="onThirdLogin" />
               </n-tab-pane>
             </n-tabs>
           </template>

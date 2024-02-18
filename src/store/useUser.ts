@@ -15,7 +15,6 @@ export interface User {
   email?: string
   home?: string
   avatar?: string
-  messageNum?: number
   [key: string]: any
 }
 
@@ -24,22 +23,30 @@ export const useUserStore = defineStore('user', {
     mode: '',
     isLogin: false,
     info: {
-      nickname: '',
+      name: '',
       email: '',
-      home: '',
-      avatar: '',
-      messageNum: 0,
+      avatar_url: '',
+      status: -1,
+      is_third: 0,
+      user_level: -1,
+      third_account_uid: -1,
+      created_at: '',
+      updated_at: '',
     },
   }),
   actions: {
     clearUserInfo() {
       this.mode = ''
       this.info = {
+        name: '',
         email: '',
-        avatar: 'https://avatars.githubusercontent.com/u/31335385?v=4',
-        home: 'https://github.com/JS-mark',
-        messageNum: 18,
-        nickname: '圣痕',
+        avatar_url: '',
+        status: -1,
+        is_third: 0,
+        user_level: -1,
+        third_account_uid: -1,
+        created_at: '',
+        updated_at: '',
       }
     },
     setMode(mode: UserMode) {
@@ -60,8 +67,6 @@ export const useUserStore = defineStore('user', {
         return
       for (const [key, value] of Object.entries(data))
         set(this.info, key, value)
-
-      console.log('111', data)
 
       window.sessionStorage.setItem(
         APP_NAME,

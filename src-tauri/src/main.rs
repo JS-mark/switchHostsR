@@ -25,6 +25,7 @@ fn main() {
             get_all_logs,
             add_log,
             edit_user_password,
+            third_account_login,
             add_user,
             user_login
         ])
@@ -108,7 +109,29 @@ fn add_user(
         .user_db
         .lock()
         .unwrap()
-        .add_user(name, email, password)
+        .add_user(name, email, "", password)
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn third_account_login(
+    state: tauri::State<AppState>,
+    name: &str,
+    email: &str,
+    account: &str,
+    password: &str,
+    uid: &str,
+    avatar_url: &str,
+    created_at: &str,
+    updated_at: &str,
+) -> Result<ResultData<UserResult>, String> {
+    state
+        .user_db
+        .lock()
+        .unwrap()
+        .third_account_login(
+            name, uid, email, account, password, avatar_url, created_at, updated_at,
+        )
         .map_err(|err| err.to_string())
 }
 

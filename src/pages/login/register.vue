@@ -25,7 +25,7 @@ export default defineComponent({
     const store = useUserStore()
     const message = useMessage()
     const formRef = ref<FormInst | null>(null)
-    const { setMode, setLogin } = store
+    const { setMode, setLogin, setUserInfo } = store
     const { isLogin, info: userInfo } = storeToRefs(store)
 
     const labelWidth = computed(() => {
@@ -44,17 +44,17 @@ export default defineComponent({
             email: data.email,
             password: data.password,
           }).then((res: any) => {
-            console.log('1212', res)
             if (res.code !== 10000)
               return Promise.reject(new Error('注册失败'))
 
             message.success(t('注册成功'))
             setMode('email')
             setLogin(true)
+            setUserInfo(res)
+
             router.replace({
               name: 'Home',
             })
-            // setUserInfo(res as User)
           }).catch((err) => {
             message.error(t('注册失败'))
             console.error('err', err)

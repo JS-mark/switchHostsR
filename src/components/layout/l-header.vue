@@ -126,9 +126,7 @@ function onAddHosts() {
             :show-arrow="true"
             @select="onDropdownSelected"
           >
-            <n-badge :value="info.messageNum">
-              <n-avatar round size="small" :src="info.avatar" />
-            </n-badge>
+            <n-avatar round size="small" :src="info.avatar_url" />
           </n-dropdown>
         </n-space>
       </section>

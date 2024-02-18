@@ -4,7 +4,7 @@ import { formatTimeV2 } from '@/utils'
 import { invoke } from '@tauri-apps/api'
 import { h, onMounted, reactive } from 'vue'
 
-import { type DataTableColumns, NButton, NSpace, NSwitch, useMessage } from 'naive-ui'
+import { type DataTableColumns, NButton, NSpace, NSwitch, NTag, useMessage } from 'naive-ui'
 
 defineOptions({
   name: 'AdminHome',
@@ -18,8 +18,10 @@ interface User {
   user_level: number
   password: string
   is_del: number
-  created_at: number
-  updated_at: number
+  is_third: number
+  third_account_uid: string
+  created_at: string
+  updated_at: string
 }
 const { t } = useI18n()
 const message = useMessage()
@@ -51,6 +53,30 @@ function createColumns(): DataTableColumns<User> {
       key: 'email',
     },
     {
+      title: '三方账户',
+      key: ' is_third',
+      render(rowData, _) {
+        const type = rowData.is_third ? 'success' : 'warning'
+        return h(NTag, {
+          type,
+        }, rowData.is_third ? '是' : '否')
+      },
+    },
+    {
+      title: '创建时间',
+      key: 'created_at',
+      render(rowData, _) {
+        return h('span', {}, formatTimeV2(rowData.created_at, 'YYYY-MM-DD HH:mm:ss'))
+      },
+    },
+    {
+      title: '修改时间',
+      key: 'updated_at',
+      render(rowData, _) {
+        return h('span', {}, formatTimeV2(rowData.updated_at, 'YYYY-MM-DD HH:mm:ss'))
+      },
+    },
+    {
       title: '状态',
       key: 'status',
       render(rowData, _) {
@@ -63,20 +89,6 @@ function createColumns(): DataTableColumns<User> {
             switchUser(rowData, val)
           },
         })
-      },
-    },
-    {
-      title: '创建时间',
-      key: 'created_at',
-      render(rowData, _) {
-        return h('span', {}, formatTimeV2(rowData.created_at * 1000, 'YYYY-MM-DD HH:mm:ss'))
-      },
-    },
-    {
-      title: '修改时间',
-      key: 'updated_at',
-      render(rowData, _) {
-        return h('span', {}, formatTimeV2(rowData.updated_at * 1000, 'YYYY-MM-DD HH:mm:ss'))
       },
     },
     {
