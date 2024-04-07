@@ -43,6 +43,7 @@ export default await tm2js(
   {
     // Without `files`, they are general rules for all files
     rules: {
+      'unused-imports/no-unused-vars': 'warn',
       'import/order': 'off',
       'style/semi': ['error', 'never'],
       'unicorn/no-new-array': 'off',

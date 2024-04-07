@@ -1,5 +1,5 @@
-import type { EventType, Handler } from 'mitt'
 import mitt from 'mitt'
+import type { EventType, Handler } from 'mitt'
 
 export namespace Bridge {
   export type Events<T = unknown> = Record<EventType, T>

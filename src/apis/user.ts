@@ -1,5 +1,7 @@
 // import api from '@/plugins/request'
 import { Octokit } from '@octokit/core'
+import { useBridgeFunc } from '@/utils'
+import type { GetPage } from './public'
 
 export function getUserInfoByGithub(name: string) {
   const octokit = new Octokit({
@@ -26,4 +28,102 @@ export function getUserInfoByGithub(name: string) {
 
 export const getUser = {
   github: getUserInfoByGithub,
+}
+
+/**
+ * 用户登录
+ * @param options
+ * @param options.email
+ * @param options.password
+ * @returns Promise
+ */
+export const loginPlatform = (options: { email: string, password: string }) => {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('user_login', options)
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 用户退出登录
+ * @returns Promise
+ */
+export const logoutPlatform = () => {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('logout', {})
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+/**
+ * 用户退出登录
+ * @returns Promise
+ */
+export const getAllUsers = (options: GetPage) => {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('get_all_users', options)
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 创建用户
+ * @param options
+ * @param options.name
+ * @param options.email
+ * @param options.password
+ * @returns Promise
+ */
+export const addUser = (options: {
+  name: string
+  email: string
+  password: string
+}) => {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('add_user', options)
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 三方登录
+ * @param options
+ * @param options.name
+ * @param options.email
+ * @param options.uid
+ * @param options.account
+ * @param options.avatarUrl
+ * @param options.password
+ * @param options.createdAt
+ * @param options.updatedAt
+ * @returns Promise
+ */
+export const thirdAccountLogin = (options: {
+  email: string
+  name: string
+  uid: string
+  account: string
+  avatarUrl: string
+  password: string
+  createdAt: string
+  updatedAt: string
+}) => {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('third_account_login', options)
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
 }

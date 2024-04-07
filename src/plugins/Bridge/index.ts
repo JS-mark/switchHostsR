@@ -1,7 +1,8 @@
-import { initUTool } from './utools'
 import Emitter from './emitter'
-import type { invoke } from './tauri-bridge'
+import { initUTool } from './utools'
 import tauriBridge from './tauri-bridge'
+
+import type { tauriAPI } from './tauri-bridge'
 
 // 状态
 const enum STATUS {
@@ -10,7 +11,7 @@ const enum STATUS {
   FAILED = 'failed',
 }
 
-type useBridgeCb<T> = T extends SYSTEM_ENV.TAURI ? typeof invoke : UToolsApi
+export type useBridgeCb<T> = T extends SYSTEM_ENV.TAURI ? typeof tauriAPI : UToolsApi
 
 // env
 export const enum SYSTEM_ENV {
@@ -25,7 +26,7 @@ export const enum SYSTEM_ENV {
 class Bridge extends Emitter {
   private status: STATUS = STATUS.INIT
   private env: SYSTEM_ENV = SYSTEM_ENV.NONE
-  private bridge: UToolsApi | typeof invoke | unknown
+  private bridge: UToolsApi | typeof tauriAPI | unknown
   constructor(env: SYSTEM_ENV) {
     super()
     this.env = env

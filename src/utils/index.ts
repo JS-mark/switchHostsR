@@ -1,25 +1,90 @@
-import { APP_NAME } from './constant'
 import { customAlphabet, urlAlphabet } from 'nanoid'
-import { SYSTEM_ENV, useJSBridge } from '@/plugins/Bridge'
+import { SYSTEM_ENV, type useBridgeCb, useJSBridge } from '@/plugins/Bridge'
 
-export * from './constant'
-export * from './time'
 import type { User } from '@/store'
+import type { Result } from '@/apis/public'
+import { APP_NAME } from './constant'
 
+export * from './time'
+export * from './constant'
+export { SYSTEM_ENV, useJSBridge } from '@/plugins/Bridge'
+export const { useBridge } = useJSBridge()
 export const getRandID = customAlphabet(urlAlphabet, 16)
 
 export const env = window.utools ? SYSTEM_ENV.UTOOLS : SYSTEM_ENV.TAURI
 
-export const { useBridge } = useJSBridge()
+export interface UserInfo extends User {
+  ua: string
+  home: string
+}
 
 /**
- * 获取系统信息
- * @returns object { ua: string }
+ * utool
  */
-export function getSystemInfo() {
-  return {
-    ua: window.navigator.userAgent,
-  }
+export type UtoolCB = (
+  bridge: useBridgeCb<SYSTEM_ENV.UTOOLS>,
+  resolve: (value: any) => void,
+  reject: (reason: any) => void,
+) => void
+
+/**
+ *
+ */
+export type TauriCB = (
+  bridge: useBridgeCb<SYSTEM_ENV.TAURI>,
+  resolve: (value: any) => void,
+  reject: (reason: any) => void,
+) => void
+
+/**
+ * 使用 bridge
+ * @param utoolCb
+ * @param tauriCb
+ * @returns Promise
+ */
+export const useBridgeFunc = <T = any>(utoolCb: UtoolCB, tauriCb: TauriCB): Promise<Result<T>> => {
+  return new Promise((resolve, reject) => {
+    if (env === SYSTEM_ENV.UTOOLS) {
+      useBridge((bridge) => {
+        // NOTE: 待实现
+        utoolCb(bridge, resolve, reject)
+      })
+    }
+    if (env === SYSTEM_ENV.TAURI) {
+      useBridge<SYSTEM_ENV.TAURI>((bridge) => {
+        tauriCb(bridge, resolve, reject)
+      })
+    }
+  })
+}
+
+/**
+ * 设置登录用户信息
+ * @param mode
+ * @param user
+ */
+export const setLoginUser = (mode: string, user: any) => {
+  window.sessionStorage.setItem(
+    APP_NAME,
+    window.btoa(
+      encodeURIComponent(
+        JSON.stringify({
+          mode,
+          time: +new Date(),
+          info: user,
+        }),
+      ),
+    ),
+  )
+}
+
+/**
+ * 获取登录用户信息
+ * @returns any
+ */
+export function getLoginUser() {
+  const data = window.sessionStorage.getItem(APP_NAME)
+  return data ? JSON.parse(decodeURIComponent(window.atob(data))) : null
 }
 
 /**
@@ -29,19 +94,20 @@ export function getSystemInfo() {
 export function openFile(file?: string) {
   if (!file)
     return
-  if (env === SYSTEM_ENV.UTOOLS) {
-    useBridge((bridge) => {
-      bridge.shellShowItemInFolder(file)
-    })
-  }
 
-  if (env === SYSTEM_ENV.TAURI) {
-    useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-      bridge('openFile', {
-        file,
-      })
-    })
-  }
+  return useBridgeFunc((bridge, resolve, reject) => {
+    try {
+      bridge.shellShowItemInFolder(file)
+      resolve({})
+    }
+    catch (error) {
+      reject(error)
+    }
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('openFile', {
+      file,
+    }).then(resolve).catch(reject)
+  })
 }
 
 /**
@@ -49,75 +115,25 @@ export function openFile(file?: string) {
  * @param file
  */
 export function openDirectory(file?: string) {
-  return new Promise((resolve) => {
-    if (env === SYSTEM_ENV.UTOOLS) {
-      useBridge((bridge) => {
-        const paths = bridge.showOpenDialog({
-          title: '选择储存数据文件夹',
-          defaultPath: file || bridge.getPath('home'),
-          properties: ['openDirectory'],
-        })
-        resolve(paths && paths[0])
+  return useBridgeFunc((bridge, resolve, reject) => {
+    try {
+      const paths = bridge.showOpenDialog({
+        title: '选择储存数据文件夹',
+        defaultPath: file || bridge.getPath('home'),
+        properties: ['openDirectory'],
       })
+      resolve(paths && paths[0])
     }
-
-    if (env === SYSTEM_ENV.TAURI) {
-      useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-        bridge('openDirectory', {
-          file,
-        }).then((res) => {
-          resolve(res)
-        })
-      })
+    catch (error) {
+      reject(error)
     }
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('openDirectory', {
+      file,
+    }).then(resolve).catch(reject)
   })
 }
 
-interface UserInfo extends User {
-  ua: string
-  home: string
-}
-
-/**
- * 获取登录用户信息
- * @param name
- * @returns
- */
-export function getLoginUser() {
-  const data = window.sessionStorage.getItem(APP_NAME)
-  return data ? JSON.parse(decodeURIComponent(window.atob(data))) : null
-}
-
-/**
- * 获取用户信息
- * @returns Promise
- */
-export function getUserInfo(): Promise<UserInfo> {
-  return new Promise((resolve) => {
-    if (env === SYSTEM_ENV.UTOOLS) {
-      useBridge((bridge) => {
-        const user = bridge.getUser()
-        resolve({
-          ua: window.navigator.userAgent,
-          home: bridge.getPath('home'),
-          ...user,
-        })
-      })
-    }
-
-    if (env === SYSTEM_ENV.TAURI) {
-      useBridge<SYSTEM_ENV.TAURI>((bridge) => {
-        bridge('getUserInfo').then((res: any) => {
-          resolve({
-            ua: window.navigator.userAgent,
-            home: res.home,
-            ...res.user,
-          })
-        })
-      })
-    }
-  })
-}
 /**
  * 获取类型
  * @param o
@@ -130,31 +146,46 @@ export function getType(o: unknown): string {
 }
 
 /**
- * 处理微博用户信息
- * @param data
- * @returns object
+ * 获取系统信息
+ * @returns object { ua: string }
  */
-export function handerUserInfoByWeibo(data: any) {
-  return {
-    avatar: data.profile_image_url,
-    nickname: data.screen_name,
-    messageNUm: data.friends_count,
-    home: `https://weibo.com/u/${data.id}`,
-    extend: data,
-  }
+export function getSystemInfo() {
+  return useBridgeFunc(() => {
+    // NOTE: 暂时实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('get_system_info', {})
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
 }
 
-/**
- * 处理github用户信息
- * @param data
- * @returns object
- */
-export function handerUserInfoByGithub(data: any) {
-  return {
-    avatar: data.avatar_url,
-    nickname: data.name,
-    messageNUm: data.followers,
-    home: data.html_url,
-    extend: data,
+export const debugUser = () => {
+  const data = {
+    avatar_url: 'https://avatars.githubusercontent.com/u/6128107?s=80&v=4',
+    created_at: '2024-02-18T07:42:49Z',
+    email: 'admin@qq.com',
+    id: 3,
+    is_del: 0,
+    is_third: 0,
+    name: 'ad',
+    status: 0,
+    third_account_uid: '-1',
+    updated_at: '2024-02-18T07:42:49Z',
+    user_level: 0,
   }
+  if (!window.__TAURI_IPC__) {
+    setLoginUser('email', data)
+    return
+  }
+
+  return useBridgeFunc(() => {
+    // NOTE: 暂时实现
+  }, (bridge, resolve, reject) => {
+    bridge.invoke('debug_user', { userId: data.id })
+      .then((res) => {
+        setLoginUser('email', data)
+        resolve(res)
+      })
+      .catch(err => reject(err))
+  })
 }

@@ -3,8 +3,8 @@ import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { invoke } from '@tauri-apps/api'
 import { mixins } from './mixins'
+import { loginPlatform } from '@/apis'
 import { type UserMode, useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
 
@@ -40,7 +40,8 @@ export default defineComponent({
         if (!errors) {
           if (isLogin.value)
             return
-          invoke('user_login', {
+          // 登录平台
+          loginPlatform({
             email: data.email,
             password: data.password,
           }).then((res: any) => {

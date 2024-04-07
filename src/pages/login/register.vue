@@ -3,7 +3,7 @@ import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { invoke } from '@tauri-apps/api'
+import { addUser } from '@/apis'
 import { mixins } from './mixins'
 import { useUserStore } from '@/store'
 import { debounce } from 'lodash-es'
@@ -39,7 +39,7 @@ export default defineComponent({
         if (!errors) {
           if (isLogin.value)
             return
-          invoke('add_user', {
+          addUser({
             name: data.nickname,
             email: data.email,
             password: data.password,

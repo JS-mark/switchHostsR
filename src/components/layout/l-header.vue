@@ -11,11 +11,14 @@ import { defineAsyncComponent } from 'vue'
 import { APP_NAME } from '@/utils/constant'
 import { personalMenus, rightMenus } from '@/utils/menu'
 import { useHostsStore, useSettingsStore, useUserStore } from '@/store'
+import { logoutPlatform } from '@/apis'
+import { useMessage } from 'naive-ui'
 
 const emits = defineEmits<{
   (event: 'onSettting'): void
   (event: 'onAddHosts'): void
 }>()
+const message = useMessage()
 const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
 const router = useRouter()
 const store = useSettingsStore()
@@ -56,11 +59,17 @@ function onDropdownSelected(event: any) {
 }
 
 function clearLoginInfo() {
-  window.sessionStorage.removeItem(APP_NAME)
-  userStore.setLogin(false)
-  userStore.clearUserInfo()
-  router.replace({
-    name: 'Login',
+  // 退出
+  logoutPlatform().then(() => {
+    window.sessionStorage.removeItem(APP_NAME)
+    userStore.setLogin(false)
+    userStore.clearUserInfo()
+    router.replace({
+      name: 'Login',
+    })
+    message.success('退出成功')
+  }).catch(() => {
+    message.error('退出失败')
   })
 }
 

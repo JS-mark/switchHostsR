@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getUser } from '@/apis/user'
-import { invoke } from '@tauri-apps/api'
+import { thirdAccountLogin } from '@/apis'
 import { mixins } from './mixins'
 import { computed, defineComponent, reactive, ref } from 'vue'
 import { type UserMode, useUserStore } from '@/store'
@@ -68,7 +68,7 @@ export default defineComponent({
                 updatedAt: res.updated_at,
               }
               // github 用户信息
-              await invoke('third_account_login', params).then((resData: any) => {
+              await thirdAccountLogin(params).then((resData: any) => {
                 setLogin(true)
                 setMode(data.userMode)
                 setUserInfo(resData)

@@ -23,7 +23,7 @@ export namespace SettingSpace {
     home: string
   }
   export interface General {
-    theme: 'black' | 'light' | 'auto'
+    theme: 'dark' | 'light' | 'auto'
     language: string
     writeMode: '1' | '2' // 追加 1，覆盖 2
     selectedMode: '1' | '2' // 单选 1，多选 2
@@ -143,7 +143,6 @@ export const useSettingsStore = defineStore('settings', {
     },
     /**
      * show
-     * @param options
      */
     show() {
       this.isShowSettings = true

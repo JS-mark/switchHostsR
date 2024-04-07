@@ -1,4 +1,4 @@
-{// Enable the ESlint flat config support
+{
   "eslint.experimental.useFlatConfig": true,
 
   // Disable the default formatter, use eslint instead
@@ -41,5 +41,6 @@
   "commentTranslate.hover.enabled": true,
   "rust-analyzer.linkedProjects": [
     "./src-tauri/Cargo.toml"
-  ]
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }

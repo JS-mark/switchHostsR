@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
 import { formatTimeV2 } from '@/utils'
-import { invoke } from '@tauri-apps/api'
+import { getAllUsers } from '@/apis'
 import { h, onMounted, reactive } from 'vue'
 
 import { type DataTableColumns, NButton, NSpace, NSwitch, NTag, useMessage } from 'naive-ui'
@@ -148,7 +148,7 @@ const data = reactive({
 
 function getData() {
   data.loading = true
-  invoke('get_all_users', {
+  getAllUsers({
     page: data.pagination.page,
     pageSize: data.pagination.pageSize,
   }).then((res: any) => {

@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
 import { formatTimeV2 } from '@/utils'
-import { invoke } from '@tauri-apps/api'
+import { getAllLogs } from '@/apis'
 import { h, onMounted, reactive } from 'vue'
 
 import { type DataTableColumns, NButton, NSpace, NSwitch, useMessage } from 'naive-ui'
 
 defineOptions({
-  name: 'AdminHome',
+  name: 'AdminLogs',
 })
 
 interface User {
@@ -136,8 +136,7 @@ const data = reactive({
 
 function getData() {
   data.loading = true
-  invoke('get_all_logs', {
-    userId: userStore.userId,
+  getAllLogs({
     page: data.pagination.page,
     pageSize: data.pagination.pageSize,
   }).then((res: any) => {

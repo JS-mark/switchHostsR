@@ -5,9 +5,10 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { useLoadingBar } from 'naive-ui'
-import { onMounted, onUnmounted, reactive, watchEffect } from 'vue'
 import useMonaco from './monaco'
+import { useLoadingBar } from 'naive-ui'
+import { useSettingsStore } from '@/store'
+import { onMounted, onUnmounted, reactive, watchEffect } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -28,22 +29,30 @@ const props = withDefaults(
 
 const emits = defineEmits<{
   (event: 'update:modelValue', value: string): void
+  (event: 'onChange', value: {
+    originValue: string
+    newValue: string
+  }): void
   (event: 'focus'): void
   (event: 'blur'): void
 }>()
+
+const appSettings = useSettingsStore()
 
 const loadingBar = useLoadingBar()
 
 const data = reactive({
   value: '',
+  origin: '',
 })
 
-const { updateVal, useEditor, destroy, createEditor, onFormatDoc } = useMonaco(
+const { updateVal, useEditor, switchTheme, destroy, createEditor, onFormatDoc } = useMonaco(
   props.language,
 )
 
 function initEditor() {
   const el = document.querySelector('#container')
+
   if (el)
     createEditor(el as HTMLElement, props.options)
   else
@@ -77,6 +86,11 @@ function initEditorEvent() {
     editor.onDidChangeModelContent(() => {
       data.value = editor.getValue()
       emits('update:modelValue', data.value)
+      // 对外响应事件
+      data.value !== data.origin && emits('onChange', {
+        originValue: data.origin,
+        newValue: data.value,
+      })
     })
   })
 }
@@ -97,6 +111,7 @@ defineExpose({
 
 watchEffect(() => {
   data.value = props.modelValue
+  switchTheme(appSettings.theme)
 })
 
 onMounted(() => {
@@ -104,6 +119,8 @@ onMounted(() => {
   setTimeout(() => {
     initEditor()
     initEditorEvent()
+    // 保留原始数据
+    data.origin = props.modelValue
     updateMonacoVal(props.modelValue, props.format)
     loadingBar.finish()
   }, 100)

@@ -116,7 +116,7 @@ watchEffect(() => {
     collapse-mode="width"
     :collapsed-width="64"
     :collapsed="collapsed"
-    show-trigger
+    show-trigger="bar"
     @collapse="onCollapse"
     @expand="onExpand"
   >
@@ -144,7 +144,7 @@ watchEffect(() => {
           strong
           :quaternary="!collapsed"
           :secondary="collapsed"
-          type="info"
+          type="primary"
           :circle="collapsed"
           class="btn" :class="[{ collapsed }]"
         >

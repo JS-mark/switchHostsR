@@ -12,12 +12,16 @@ export interface Options {
  * 发送日志
  * @param options { Options }
  */
-export function sendLog(options: Options): void {
+export async function sendLog(options: Options): Promise<void> {
   const store = useSettingsStore()
+  const systemInfo = (await getSystemInfo()).data
   const data = {
     time: +new Date(),
     content: options.msg,
-    system: getSystemInfo(),
+    system: systemInfo,
+    info: {
+      ua: window.navigator.userAgent,
+    },
     level: options.level || 'system',
   }
 

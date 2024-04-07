@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
+import { setLoginUser } from '@/utils'
 import { isEmpty, set } from 'lodash-es'
-import { APP_NAME } from '@/utils/constant'
 
 export type UserMode =
   | 'weibo'
@@ -67,19 +67,8 @@ export const useUserStore = defineStore('user', {
         return
       for (const [key, value] of Object.entries(data))
         set(this.info, key, value)
-
-      window.sessionStorage.setItem(
-        APP_NAME,
-        window.btoa(
-          encodeURIComponent(
-            JSON.stringify({
-              mode: this.mode,
-              time: +new Date(),
-              info: data,
-            }),
-          ),
-        ),
-      )
+      // 保存登录用户信息
+      setLoginUser(this.mode, data)
     },
   },
 })

@@ -233,7 +233,6 @@ impl Database {
         password: &str,
     ) -> Result<ResultData<UserResult>, RustsqliteError> {
         let tx: rusqlite::Transaction<'_> = self.conn.transaction()?;
-
         let user_exists = tx
             .query_row(
                 "SELECT EXISTS(SELECT 1 FROM users WHERE users.email = ?)",

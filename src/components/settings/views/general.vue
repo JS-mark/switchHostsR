@@ -34,7 +34,7 @@ onBeforeMount(() => {
 })
 
 const themes = [
-  { label: t('dark'), key: 'black' },
+  { label: t('dark'), key: 'dark' },
   { label: t('light'), key: 'light' },
   { label: t('systemTheme'), key: 'auto' },
 ]

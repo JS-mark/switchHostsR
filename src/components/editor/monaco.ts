@@ -58,12 +58,34 @@ export default function useMonaco(language = 'json') {
     })
     setTimeout(() => {
       useEditor(async (editor) => {
-        initReadOnly && editor?.updateOptions({ readOnly: false })
+        editor?.updateOptions({ readOnly: initReadOnly })
         format
         && (await editor?.getAction('editor.action.formatDocument')?.run())
-        initReadOnly && editor?.updateOptions({ readOnly: true })
       })
     }, 100)
+  }
+
+  const switchTheme = (theme: 'dark' | 'light' | 'auto') => {
+    let theme_ = 'auto'
+    switch (theme) {
+      case 'auto':
+        theme_ = isDark.value ? 'hosts-dark' : 'hosts'
+        break
+      case 'light':
+        theme_ = 'hosts'
+        break
+      case 'dark':
+        theme_ = 'hosts-dark'
+        break
+      default:
+        break
+    }
+
+    useEditor((editor) => {
+      editor.updateOptions({
+        theme: theme_,
+      })
+    })
   }
 
   const createEditor = (
@@ -111,6 +133,7 @@ export default function useMonaco(language = 'json') {
     updateVal,
     useEditor,
     destroy,
+    switchTheme,
     createEditor,
     onFormatDoc,
   }

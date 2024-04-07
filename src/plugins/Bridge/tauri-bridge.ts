@@ -1,5 +1,7 @@
 import * as tauriAPI from '@tauri-apps/api'
 
+export { tauriAPI }
+
 export {
   invoke,
   app,
@@ -22,7 +24,7 @@ export {
 
 /**
  * 动态加载库
- * @returns
+ * @returns Promise<Tauri>
  */
 export default function initTauri() {
   return new Promise((resolve) => {
