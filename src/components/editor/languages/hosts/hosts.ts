@@ -13,7 +13,8 @@ monaco.languages.register({ id: lang })
 monaco.languages.setMonarchTokensProvider(lang, {
   tokenizer: {
     root: [
-      [/(\b25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(\b25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(\b25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(\b25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:\d{1,5})?\b/, 'constant'],
+      // eslint-disable-next-line regexp/no-useless-assertions
+      [/(\b25[0-5]|2[0-4]\d|[01]?\d{1,2})\.(\b25[0-5]|2[0-4]\d|[01]?\d{1,2})\.(\b25[0-5]|2[0-4]\d|[01]?\d{1,2})\.(\b25[0-5]|2[0-4]\d|[01]?\d{1,2})(:\d{1,5})?\b/, 'constant'],
       [/(localhost|broadcasthost)\b/, 'custom-hostname'],
       [/(\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b)/, 'custom-domain'], // 高亮域名
       [/#[^\n]*/, 'comment'], // 示例：高亮显示注释
@@ -33,15 +34,17 @@ monaco.languages.registerCompletionItemProvider(lang, {
       endColumn: word.endColumn,
     }
 
-    return { suggestions: [
-      {
-        label: 'demo',
-        insertText: '0.0.0.0 www.baidu.com',
-        kind: monaco.languages.CompletionItemKind.Snippet,
-        detail: '示例代码',
-        range,
-      },
-    ] }
+    return {
+      suggestions: [
+        {
+          label: 'demo',
+          insertText: '127.0.0.1 www.baidu.com',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          detail: '示例代码',
+          range,
+        },
+      ],
+    }
   },
 })
 

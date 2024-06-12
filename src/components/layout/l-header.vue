@@ -81,7 +81,8 @@ function onAddHosts() {
 
 <template>
   <n-layout-header bordered>
-    <header class="header row f-between a-center">
+    <!-- data-tauri-drag-region tauri 拖拽用属性 -->
+    <header class="header row f-between a-center" data-tauri-drag-region>
       <section row>
         <n-space class="row a-center">
           <SvgIcon name="logo-header" size="35px" />
@@ -94,13 +95,7 @@ function onAddHosts() {
           <!-- 添加 -->
           <n-tooltip v-if="isLogin" trigger="hover">
             <template #trigger>
-              <n-button
-                strong
-                secondary
-                circle
-                type="primary"
-                @click="onAddHosts"
-              >
+              <n-button strong secondary circle type="primary" @click="onAddHosts">
                 <template #icon>
                   <SvgIcon name="plus" size="16px" />
                 </template>
@@ -109,14 +104,8 @@ function onAddHosts() {
             {{ $t("添加新的 Hosts 内容") }}
           </n-tooltip>
           <!-- 设置 -->
-          <n-dropdown
-            placement="bottom-end"
-            trigger="hover"
-            size="large"
-            :options="rightMenus($t)"
-            :show-arrow="true"
-            @select="onDropdownSelected"
-          >
+          <n-dropdown placement="bottom-end" trigger="hover" size="large" :options="rightMenus($t)" :show-arrow="true"
+            @select="onDropdownSelected">
             <n-button strong secondary circle type="info">
               <template #icon>
                 <SvgIcon name="settings" size="16px" />
@@ -127,14 +116,8 @@ function onAddHosts() {
 
         <n-divider vertical />
         <n-space class="row f-end a-center">
-          <n-dropdown
-            placement="bottom-end"
-            trigger="hover"
-            size="large"
-            :options="personalMenus($t)"
-            :show-arrow="true"
-            @select="onDropdownSelected"
-          >
+          <n-dropdown placement="bottom-end" trigger="hover" size="large" :options="personalMenus($t)"
+            :show-arrow="true" @select="onDropdownSelected">
             <n-avatar round size="small" :src="info.avatar_url" />
           </n-dropdown>
         </n-space>

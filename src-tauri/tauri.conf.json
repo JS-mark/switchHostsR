@@ -4,7 +4,7 @@
     "beforeBuildCommand": "pnpm build:tauri",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
-    "withGlobalTauri": false
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "edit-hosts-tauri",
@@ -16,10 +16,20 @@
       "iconAsTemplate": true
     },
     "allowlist": {
-      "all": false,
+      "all": true,
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "all": true,
+        "scope": [
+          "*",
+          "$DOWNLOAD/*"
+        ]
+      },
+      "window": {
+        "all": true
       }
     },
     "bundle": {
@@ -37,7 +47,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.mark.switchhostsR",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -61,13 +71,18 @@
     "updater": {
       "active": false
     },
+    "macOSPrivateApi": true,
     "windows": [
       {
-        "fullscreen": false,
+        "width": 800,
         "height": 600,
+        "title": "switch-hosts-r",
+        "fullscreen": false,
         "resizable": true,
-        "title": "edit-hosts-tauri",
-        "width": 800
+        "center": true,
+        "skipTaskbar": false,
+        "decorations": false,
+        "transparent": true
       }
     ]
   }

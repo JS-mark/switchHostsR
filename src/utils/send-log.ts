@@ -1,3 +1,4 @@
+import { insertLog } from '@/apis'
 import { getSystemInfo } from './index'
 import { useSettingsStore } from '@/store'
 
@@ -25,8 +26,10 @@ export async function sendLog(options: Options): Promise<void> {
     level: options.level || 'system',
   }
 
-  if (store.canSendData)
+  if (store.canSendData) {
+    insertLog(2, data)
     console.warn('可以发送日志', data)
+  }
   else
     console.warn('不可以发送日志', data)
 }

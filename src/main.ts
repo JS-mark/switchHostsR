@@ -1,19 +1,17 @@
-import { createApp } from 'vue'
 import i18n from './langs'
-import { useRoutes } from './router'
-import { useGlobalComponents } from './plugins/global-comp'
-import { useFeature } from './plugins/use-feature'
-import { usePinia } from './plugins/usePinia'
-
-// 通用字体
-import 'vfonts/Lato.css'
-
-// 等宽字体
-import 'vfonts/FiraCode.css'
-import './style.less'
-import 'virtual:svg-icons-register'
-import 'virtual:windi.css'
 import App from './App.vue'
+import { createApp } from 'vue'
+import { useRoutes } from './router'
+import { usePinia } from './plugins/usePinia'
+import { useFeature } from './plugins/use-feature'
+import { useGlobalComponents } from './plugins/global-comp'
+
+
+import './style.less'
+import 'vfonts/Lato.css'
+import 'virtual:windi.css'
+import 'vfonts/FiraCode.css'
+import 'virtual:svg-icons-register'
 
 createApp(App)
   .use(i18n)

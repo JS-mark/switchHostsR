@@ -1,20 +1,13 @@
-<script lang="ts">
-/**
- * 高级设置
- */
-export default {
-  name: 'Advanced',
-}
-</script>
-
 <script lang="ts" setup>
 import { reactive, watchEffect } from 'vue'
-import { sendLog } from '@/utils/sendLog'
 import { APP_NAME } from '@/utils/constant'
-import { openDirectory, openFile } from '@/utils'
-import type { SettingSpace } from '@/store/useSettings'
 import { useSettingsStore } from '@/store/useSettings'
-
+import type { SettingSpace } from '@/store/useSettings'
+import { openDirectory, openFile, sendLog } from '@/utils'
+import AdvancedCell from './components/advanced-cell.vue'
+defineOptions({
+  name: 'Advanced',
+})
 const store = useSettingsStore()
 const model = reactive<SettingSpace.Advanced>({
   canSendData: false,
@@ -58,65 +51,54 @@ watchEffect(() => {
 </script>
 
 <template>
-  <section class="main">
+  <section class="main pt-10px">
     <!-- 标题 -->
-    <h4>
-      {{ $t("settings.advanced.title") }}
-    </h4>
-    <!-- 提示 -->
-    <span class="tip">
-      {{ $t("settings.advanced.tip") }}
-    </span>
-    <p>
-      <!-- 确认按钮提示 -->
-      <n-checkbox :checked="model.canSendData" :on-update:checked="onChecked">
-        {{ $t("好的，发送匿名的使用数据") }}
-      </n-checkbox>
-    </p>
-    <h4>{{ $t("我的 Hosts 文件在哪里？") }}</h4>
-    <div class="row a-center">
-      <span class="tip">{{ $t("你的 Hosts 文件在：") }}</span>
-      <n-tooltip placement="bottom" trigger="hover">
-        <template #trigger>
-          <n-button
-            size="small"
-            quaternary
-            type="primary"
-            @click="openFile(model.hostsPath)"
-          >
-            {{ model.hostsPath }}
-          </n-button>
-        </template>
-        <span>{{ $t("点击打开") }}</span>
-      </n-tooltip>
-    </div>
-    <h4>{{ $t("我的数据储存在哪里？") }}</h4>
-    <div class="row a-center">
+    <AdvancedCell :title="$t('settings.advanced.title')">
+      <!-- 提示 -->
       <span class="tip">
-        {{ $t("你的数据文件在：") }}
+        {{ $t("settings.advanced.tip") }}
       </span>
-      <n-tooltip placement="bottom" trigger="hover">
-        <template #trigger>
-          <n-button
-            size="small"
-            quaternary
-            type="primary"
-            @click="openFileByPath(model.SwitchHostsRPath)"
-          >
-            {{ model.SwitchHostsRPath }}
-          </n-button>
-        </template>
-        <span>{{ $t("点击打开") }}</span>
-      </n-tooltip>
-      <n-button
-        size="small"
-        quaternary
-        type="primary"
-        @click="changeFile(model.SwitchHostsRPath)"
-      >
-        {{ $t("change") }}
-      </n-button>
-    </div>
+      <p>
+        <!-- 确认按钮提示 -->
+        <n-checkbox :checked="model.canSendData" :on-update:checked="onChecked">
+          {{ $t("好的，发送匿名的使用数据") }}
+        </n-checkbox>
+      </p>
+    </AdvancedCell>
+
+    <AdvancedCell :title="$t('我的 Hosts 文件在哪里？')">
+      <div class="row a-center">
+        <span class="tip">{{ $t("你的 Hosts 文件在：") }}</span>
+        <n-tooltip placement="bottom" trigger="hover">
+          <template #trigger>
+            <n-button size="small" quaternary type="primary" @click="openFile(model.hostsPath)">
+              {{ model.hostsPath }}
+            </n-button>
+          </template>
+          <span>{{ $t("点击打开") }}</span>
+        </n-tooltip>
+      </div>
+    </AdvancedCell>
+
+
+    <AdvancedCell :title="$t('我的数据储存在哪里？')">
+      <div class="row a-center">
+        <span class="tip">
+          {{ $t("你的数据文件在：") }}
+        </span>
+        <n-tooltip placement="bottom" trigger="hover">
+          <template #trigger>
+            <n-button size="small" quaternary type="primary" @click="openFileByPath(model.SwitchHostsRPath)">
+              {{ model.SwitchHostsRPath }}
+            </n-button>
+          </template>
+          <span>{{ $t("点击打开") }}</span>
+        </n-tooltip>
+        <n-button size="small" quaternary type="primary" @click="changeFile(model.SwitchHostsRPath)">
+          {{ $t("change") }}
+        </n-button>
+      </div>
+    </AdvancedCell>
   </section>
 </template>
 

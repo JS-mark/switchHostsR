@@ -1,25 +1,38 @@
 [package]
 name = "switch-hosts-r"
 version = "0.0.1"
-description = "A Tauri App"
+description = "Tauri App, switch hosts"
 authors = [ "The Mark" ]
-license = ""
-repository = ""
+license = "MIT"
+repository = "https://github.com/JS-mark/switchHostsR"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.2", features = [] }
+tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = [ "derive" ] }
-tauri = { version = "1.2", features = [ "shell-open", "system-tray"] }
-chrono = { version = "0.4", features = [ "serde" ] }
-rusqlite = "0.30.0"
+serde_json = "1.0.115"
+serde = { version = "1.0.197", features = [ "derive" ] }
+tauri = { version = "1.6.1", features = [ "macos-private-api",
+  "api-all",
+  "system-tray",
+  "icon-png",
+  "icon-ico"
+] }
+chrono = { version = "0.4.37", features = [ "serde" ] }
+diesel = { version = "2.1.5", features = [
+  "sqlite",
+  "r2d2"
+] }
+r2d2 = "0.8.10"
+dotenv = "0.15.0"
 rust-crypto = "0.2.36"
-bcrypt = "0.15.0"
+bcrypt = "0.15.1"
+sysinfo = "0.30.8"
+window-shadows = "0.2.2" # windows 阴影和圆角
+window-vibrancy = "0.4.3" # windows 磨砂背景 tauri-v1.x版本最好使用0.4.3版本
 
 [features]
 # by default Tauri runs in production mode

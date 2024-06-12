@@ -8,28 +8,30 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { useMessage } from 'naive-ui'
 import { onBeforeMount, reactive } from 'vue'
-import type { SettingSpace } from '@/store/useSettings'
 import { useSettingsStore } from '@/store/useSettings'
+import type { SettingSpace } from '@/store/useSettings'
 
 const store = useSettingsStore()
 const message = useMessage()
 const { t } = useI18n()
-const model = reactive<SettingSpace.Cmd & { useFormat: boolean }>({
+const modelData = reactive<SettingSpace.Cmd & {
+  useFormat: boolean
+}>({
   cmd: '',
   useFormat: true,
 })
 
 onBeforeMount(() => {
   for (const [key, value] of Object.entries(store.cmd))
-    Reflect.set(model, key, value)
+    Reflect.set(modelData, key, value)
 })
 
 function confirm() {
   cancel()
-  store.setSettingsByData({ cmd: model })
+  store.setSettingsByData({ cmd: modelData })
   message.success(t('更新配置成功！'))
 }
 function cancel() {
@@ -38,13 +40,15 @@ function cancel() {
 </script>
 
 <template>
-  <div class="form">
+  <div class="h-[calc(100%-44px)] pt-10px">
     <!-- shell 编辑器 -->
-    <editor v-model="model.cmd" :format="model.useFormat" language="shell" class="editor" />
+    <editor class="editor" v-model="modelData.cmd" language="shell" id="cmd-editor" :options="{
+      readOnly: false
+    }" :format="true" />
   </div>
   <!-- footer -->
   <section class="row f-end a-center">
-    <n-space class="user-control a-center">
+    <n-space class="user-control a-center mt-10px">
       <slot name="control" />
       <!-- 取消 -->
       <n-button strong secondary type="error" @click="cancel">
@@ -59,9 +63,6 @@ function cancel() {
 </template>
 
 <style lang="stylus" scoped>
-.form
-  height calc(100% - 34px)
-
 .tip
   color #718096
   font-size 12px

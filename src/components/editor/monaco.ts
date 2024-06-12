@@ -1,9 +1,7 @@
 import 'monaco-editor/esm/vs/editor/editor.all.js'
+import 'monaco-editor/esm/vs/language/json/monaco.contribution'
 import 'monaco-editor/esm/vs/basic-languages/monaco.contribution'
 import 'monaco-editor/esm/vs/basic-languages/shell/shell.contribution'
-import 'monaco-editor/esm/vs/language/json/monaco.contribution'
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import * as monaco from 'monaco-editor'
 import { useDark } from '@vueuse/core'
 import emitter from '@/plugins/emitter'
@@ -12,13 +10,33 @@ import './languages/index'
 export { monaco }
 
 export function useMonacoEditor() {
-  // eslint-disable-next-line no-restricted-globals
   self.MonacoEnvironment = {
-    getWorker(_, label) {
-      if (label === 'json')
-        return new JsonWorker()
+    getWorker(workerId, label) {
+      const getWorkerModule = (moduleUrl: string, label: string) => {
+        // @ts-expect-error
+        return new Worker(self.MonacoEnvironment?.getWorkerUrl(moduleUrl as string, label as string), {
+          name: label,
+          type: 'module',
+        })
+      }
 
-      return new EditorWorker()
+      switch (label) {
+        case 'json':
+          return getWorkerModule('/monaco-editor/esm/vs/language/json/json.worker?worker', label)
+        case 'css':
+        case 'scss':
+        case 'less':
+          return getWorkerModule('/monaco-editor/esm/vs/language/css/css.worker?worker', label)
+        case 'html':
+        case 'handlebars':
+        case 'razor':
+          return getWorkerModule('/monaco-editor/esm/vs/language/html/html.worker?worker', label)
+        case 'typescript':
+        case 'javascript':
+          return getWorkerModule('/monaco-editor/esm/vs/language/typescript/ts.worker?worker', label)
+        default:
+          return getWorkerModule('/monaco-editor/esm/vs/editor/editor.worker?worker', label)
+      }
     },
   }
 }
@@ -28,7 +46,7 @@ export function useMonacoEditor() {
  * @param language
  * @returns { void }
  */
-export default function useMonaco(language = 'json') {
+export default function useMonaco(language = 'shell') {
   const isDark = useDark({
     selector: 'body',
     attribute: 'color-scheme',
@@ -38,10 +56,11 @@ export default function useMonaco(language = 'json') {
   let initReadOnly = false
 
   const useEditor = (
+    id: string,
     cb: (editor: monaco.editor.IStandaloneCodeEditor) => void,
   ) => {
     if (window.__MonacoEditor) {
-      cb(window.__MonacoEditor as monaco.editor.IStandaloneCodeEditor)
+      cb(window.__MonacoEditor[id] as monaco.editor.IStandaloneCodeEditor)
       return
     }
     console.warn('editor not ready! 通过 cb 执行！')
@@ -52,36 +71,49 @@ export default function useMonaco(language = 'json') {
     })
   }
 
-  const updateVal = async (val: string, format = true) => {
-    useEditor((editor) => {
+  const updateVal = async (id: string, val: string, format = true) => {
+    useEditor(id, (editor) => {
       editor?.setValue(val)
     })
     setTimeout(() => {
-      useEditor(async (editor) => {
+      useEditor(id, async (editor) => {
         editor?.updateOptions({ readOnly: initReadOnly })
         format
-        && (await editor?.getAction('editor.action.formatDocument')?.run())
+          && (await editor?.getAction('editor.action.formatDocument')?.run())
       })
     }, 100)
   }
 
-  const switchTheme = (theme: 'dark' | 'light' | 'auto') => {
-    let theme_ = 'auto'
+  const getTheme = (theme: 'dark' | 'light' | 'auto', language: string) => {
+    const lang = language
     switch (theme) {
       case 'auto':
-        theme_ = isDark.value ? 'hosts-dark' : 'hosts'
-        break
+        if (lang === 'hosts') {
+          return isDark.value ? 'hosts-dark' : 'hosts'
+        }
+        else {
+          return isDark.value ? 'vs-dark' : 'vs'
+        }
       case 'light':
-        theme_ = 'hosts'
-        break
+        if (lang === 'hosts') {
+          return 'hosts'
+        }
+        else {
+          return 'vs-dark'
+        }
       case 'dark':
-        theme_ = 'hosts-dark'
-        break
-      default:
-        break
+        if (lang === 'hosts') {
+          return 'hosts-dark'
+        }
+        else {
+          return 'vs-dark'
+        }
     }
+  }
 
-    useEditor((editor) => {
+  const switchTheme = (id: string, theme: 'dark' | 'light' | 'auto') => {
+    const theme_ = getTheme(theme, language)
+    useEditor(id, (editor) => {
       editor.updateOptions({
         theme: theme_,
       })
@@ -89,18 +121,25 @@ export default function useMonaco(language = 'json') {
   }
 
   const createEditor = (
+    id: string,
     el: HTMLElement | null,
     editorOption: monaco.editor.IStandaloneEditorConstructionOptions = {},
   ) => {
-    if (window.__MonacoEditor)
+    if (window.__MonacoEditor && window.__MonacoEditor[id])
       return
-
+    if (!window.__MonacoEditor) {
+      window.__MonacoEditor = {}
+    }
     initReadOnly = !!editorOption.readOnly
-    const theme = isDark.value ? 'hosts-dark' : 'hosts'
-    window.__MonacoEditor
+    const theme = getTheme('auto', language)
+
+    window.__MonacoEditor[id]
       = el
       && (monaco.editor.create(el, {
+        value: '',
         language,
+        foldingStrategy: 'indentation', // 代码可分小段折叠
+        overviewRulerBorder: false, // 不要滚动条的边框
         minimap: { enabled: false },
         theme,
         lineNumbers: 'on',
@@ -113,22 +152,24 @@ export default function useMonaco(language = 'json') {
         automaticLayout: true, // 自适应宽高
         ...editorOption,
       }) as unknown as monaco.editor.IStandaloneCodeEditor)
+    // 编辑器 ready
     emitter.emit('ready', window.__MonacoEditor)
     return window.__MonacoEditor
   }
 
-  const destroy = () => {
-    useEditor((editor) => {
+  const destroy = (id: string) => {
+    useEditor(id, (editor) => {
       editor.dispose()
-      window.__MonacoEditor = null
+      window.__MonacoEditor[id] = null
     })
   }
 
-  const onFormatDoc = () => {
-    useEditor((editor) => {
+  const onFormatDoc = (id: string) => {
+    useEditor(id, (editor) => {
       editor?.getAction('editor.action.formatDocument')?.run()
     })
   }
+
   return {
     updateVal,
     useEditor,

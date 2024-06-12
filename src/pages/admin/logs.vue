@@ -1,127 +1,115 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
-import { formatTimeV2 } from '@/utils'
+import { formatTimeV2, sendLog } from '@/utils'
 import { getAllLogs } from '@/apis'
 import { h, onMounted, reactive } from 'vue'
-
-import { type DataTableColumns, NButton, NSpace, NSwitch, useMessage } from 'naive-ui'
+import { type DataTableColumns, NTag } from 'naive-ui'
 
 defineOptions({
   name: 'AdminLogs',
 })
 
-interface User {
+interface Logs {
   id: number
-  name: string
-  email: string
-  status: number
-  user_level: number
+  content: string
+  log_type: number
+  user_email: string
+  user_name: string
+  user_avatar_url: string
   password: string
-  is_del: number
   created_at: number
-  updated_at: number
+  created_by: number
 }
 const { t } = useI18n()
-const message = useMessage()
 
-const editUser = (user: User) => {
-  message.info(`编辑用户：${user.name}`)
-}
-
-const switchUser = (user: User, status: boolean) => {
-  message.info(`删除用户：${user.name}, ${status}`)
-}
-
-const delUser = (user: User) => {
-  message.info(`删除用户：${user.name}`)
-}
-
-function createColumns(): DataTableColumns<User> {
+function createColumns(): DataTableColumns<Logs> {
   return [
+    {
+      type: 'expand',
+      renderExpand: (rowData) => {
+        return rowData.content
+      },
+    },
     {
       title: 'ID',
       key: 'id',
     },
     {
-      title: '用户名',
-      key: 'name',
-    },
-    {
-      title: '邮箱',
-      key: 'email',
-    },
-    {
-      title: '状态',
-      key: 'status',
+      title: '日志类型',
+      key: 'log_type',
       render(rowData, _) {
-        return h(NSwitch, {
-          'modelValue': rowData.status === 1,
-          'round': false,
-          'checkedValue': t('启用'),
-          'uncheckedValue': t('禁用'),
-          'on-update:value': (val: boolean) => {
-            switchUser(rowData, val)
-          },
+        const getTag = (type: number) => {
+          let tagType = 'default'
+          let text = ''
+          switch (type) {
+            case 0:
+              tagType = 'success'
+              text = '更新'
+              break
+            case -1:
+              tagType = 'warning'
+              text = '未知'
+
+              break
+            case 1:
+              tagType = 'error'
+              text = '删除'
+              break
+            case 2:
+              tagType = 'success'
+              text = '增加'
+              break
+          }
+          return {
+            tagType,
+            text,
+          }
+        }
+        const { tagType, text } = getTag(rowData.log_type)
+        return h(NTag, {
+          bordered: false,
+          type: tagType as typeof NTag['type'],
+        }, () => t(text))
+      },
+    },
+    {
+      title: t('用户名'),
+      key: 'user_name',
+    },
+    {
+      title: t('头像'),
+      key: 'user_avatar_url',
+      render(rowData, _) {
+        return h('img', {
+          src: rowData.user_avatar_url,
+          style: 'width: 32px; height: 32px; border-radius: 50%;',
         })
       },
     },
     {
-      title: '创建时间',
+      title: t('邮箱'),
+      key: 'user_email',
+    },
+    {
+      title: t('创建时间'),
       key: 'created_at',
       render(rowData, _) {
-        return h('span', {}, formatTimeV2(rowData.created_at * 1000, 'YYYY-MM-DD HH:mm:ss'))
-      },
-    },
-    {
-      title: '修改时间',
-      key: 'updated_at',
-      render(rowData, _) {
-        return h('span', {}, formatTimeV2(rowData.updated_at * 1000, 'YYYY-MM-DD HH:mm:ss'))
-      },
-    },
-    {
-      title: 'Action',
-      key: 'actions',
-      render(row) {
-        return h(NSpace, {}, () => [
-          h(
-            NButton,
-            {
-              strong: true,
-              tertiary: true,
-              size: 'small',
-              type: 'primary',
-              onClick: () => editUser(row),
-            },
-            { default: () => t('edit_user') },
-          ),
-          h(
-            NButton,
-            {
-              strong: true,
-              tertiary: true,
-              type: 'error',
-              size: 'small',
-              onClick: () => delUser(row),
-            },
-            { default: () => t('del_user') },
-          ),
-        ])
+        return h('span', {}, formatTimeV2(Number(rowData.created_at), 'YYYY-MM-DD HH:mm:ss'))
       },
     },
   ]
 }
 
 const data = reactive({
-  list: [] as User[],
+  list: [] as Logs[],
   columns: createColumns(),
   loading: true,
   pagination: {
     page: 1,
-    pageSize: 10,
+    pageSize: 5,
     itemCount: 0,
     showSizePicker: true,
-    pageSizes: [15, 20, 30],
+    pageSizes: [5, 10, 15, 20, 30],
     onChange: (page: number) => {
       data.pagination.page = page
       getData()
@@ -140,13 +128,22 @@ function getData() {
     page: data.pagination.page,
     pageSize: data.pagination.pageSize,
   }).then((res: any) => {
-    console.log(res)
+    console.log('e12e', res)
     data.list = res.data.list
     data.pagination.itemCount = res.data.total
   }).catch((err) => {
-    console.error(err)
     data.list = []
     data.pagination.itemCount = 0
+    // 发送错误日志
+    sendLog({
+      msg: JSON.stringify({
+        error: {
+          msg: err.message,
+          stack: err.stack,
+        },
+      }),
+      level: 'error',
+    })
   }).finally(() => {
     data.loading = false
   })
@@ -162,7 +159,9 @@ onMounted(() => {
     :columns="data.columns"
     :data="data.list"
     :loading="data.loading"
+    :row-key="(row) => row.id"
     :pagination="data.pagination"
     bordered
+    remote
   />
 </template>

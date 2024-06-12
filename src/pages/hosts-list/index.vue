@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { onBeforeMount, reactive } from 'vue'
 import { useMessage } from 'naive-ui'
-import { type Hosts, getAllHosts } from '@/apis'
+import { type Hosts, getAllHosts, updateHostsData } from '@/apis'
+import { debounce } from 'lodash-es';
+import { sendLog } from '@/utils';
 
 defineOptions({
   name: 'HostsList',
@@ -13,32 +15,27 @@ const data = reactive({
   curId: -1,
   curHostsData: {} as Hosts,
   hostsList: [] as Hosts[],
+  pageConfig: {
+    page: 1,
+    size: 10,
+    total: 0,
+  },
 })
 
 const getData = () => {
   data.loading = true
   // 调用接口获取数据
   getAllHosts({ page: 1, pageSize: 1000 }).then((res) => {
-    if (res.code === 10000)
-      data.hostsList = res.data
-    else return Promise.reject(res)
+    if (res.code === 10000) {
+      data.hostsList = res.data.list
+      data.pageConfig.total = res.data.total
+
+      if (res.data)
+        data.curId = data.hostsList[0].id
+    }
+
+    else { return Promise.reject(res) }
   }).catch((err) => {
-    data.hostsList = new Array(100).fill('').map((_, index) => {
-      return {
-        id: index,
-        name: `demo2${index}`,
-        hosts_type: 0,
-        content: `/etc/hosts${index}`,
-        status: 0,
-        is_del: 0,
-        is_readonly: Number(index % 2 === 0),
-        created_at: '2023-03-29 10:50:25',
-        updated_at: '2023-03-29 10:50:25',
-        hosts_refresh_time: 3600,
-        last_refresh_time: '2023-03-29 10:50:25',
-      }
-    })
-    data.curId = data.hostsList[0].id
     message.error(err.msg || '获取失败')
   }).finally(() => {
     data.loading = false
@@ -49,10 +46,27 @@ const onChangeTab = (value: number) => {
   data.curId = value
 }
 
-const onEditorChange = (event: { originValue: string, newValue: string }, hosts: Hosts, index: number) => {
+const onEditorChange = debounce((event: {
+  originValue: string
+  newValue: string
+}, hosts: Hosts, _: number) => {
   // 更新数据
-
-}
+  sendLog({
+    msg: `更新了${hosts.name}, ${JSON.stringify({
+      hosts_id: hosts.id,
+      hosts_name: hosts.name,
+      hosts_type: hosts.hosts_type,
+      hosts_path: hosts.hosts_path,
+    })}`,
+    level: 'system',
+  })
+  updateHostsData(hosts.id, {
+    name: hosts.name,
+    content: event.newValue,
+    hosts_type: hosts.hosts_type,
+    hosts_path: hosts.hosts_path,
+  })
+}, 300)
 
 onBeforeMount(() => {
   getData()
@@ -78,6 +92,7 @@ onBeforeMount(() => {
                 v-model="hosts.content"
                 :format="true"
                 class="editor"
+                id="hosts-editor"
                 language="hosts"
                 :options="{
                   readOnly: hosts.is_readonly,

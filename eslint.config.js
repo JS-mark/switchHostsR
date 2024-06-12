@@ -1,7 +1,7 @@
 // eslint.config.js
-import tm2js from '@tm2js/eslint-config'
+import antfu from '@antfu/eslint-config'
 
-export default await tm2js(
+export default await antfu(
   {
     // Enable stylistic formatting rules
     // stylistic: true,

@@ -8,7 +8,7 @@ declare module 'monaco-editor/esm/vs/basic-languages/_.contribution';
 declare global {
   interface Window {
     utools: UToolsApi
-    __MonacoEditor: monaco.editor.IStandaloneCodeEditor | null
+    __MonacoEditor: Record<string, monaco.editor.IStandaloneCodeEditor | null>
     $useMessage: MessageApiInjection
   }
 }

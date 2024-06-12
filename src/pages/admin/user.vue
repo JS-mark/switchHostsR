@@ -59,7 +59,9 @@ function createColumns(): DataTableColumns<User> {
         const type = rowData.is_third ? 'success' : 'warning'
         return h(NTag, {
           type,
-        }, rowData.is_third ? '是' : '否')
+        }, {
+          default: () => rowData.is_third ? '是' : '否',
+        })
       },
     },
     {
@@ -175,5 +177,6 @@ onMounted(() => {
     :loading="data.loading"
     :pagination="data.pagination"
     bordered
+    remote
   />
 </template>

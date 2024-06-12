@@ -6,6 +6,10 @@ import Login from './login.vue'
 import Register from './register.vue'
 import ThirdLogin from './third-login.vue'
 import { mixins } from './mixins'
+import { debugUser } from '@/utils'
+
+// 调试用
+debugUser()
 
 export default defineComponent({
   name: 'RegisterAndLogin',

@@ -59,74 +59,61 @@ function cancel() {
 </script>
 
 <template>
-  <n-form
-    ref="formRef"
-    class="form"
-    :model="model"
-    label-placement="left"
-    label-width="auto"
-    require-mark-placement="right-hanging"
-  >
-    <n-form-item :label="$t('language')" path="language">
-      <n-select
-        v-model:value="model.language"
-        :placeholder="$t('选择语言')"
-        :options="languages"
-        value-field="key"
-      />
-    </n-form-item>
+  <n-scrollbar class="!h-[calc(100%-44px)] mb-10px pt-10px" >
+    <n-form ref="formRef" :model="model" label-placement="left" label-width="auto"
+      require-mark-placement="right-hanging">
+      <n-form-item :label="$t('language')" path="language">
+        <n-select v-model:value="model.language" :placeholder="$t('选择语言')" :options="languages" value-field="key" />
+      </n-form-item>
 
-    <n-form-item :label="$t('theme')" path="theme">
-      <n-select
-        v-model:value="model.theme"
-        :placeholder="$t('选择主题色')"
-        :options="themes"
-        value-field="key"
-      />
-    </n-form-item>
+      <n-form-item :label="$t('theme')" path="theme">
+        <n-select v-model:value="model.theme" :placeholder="$t('选择主题色')" :options="themes" value-field="key" />
+      </n-form-item>
 
-    <n-form-item :label="$t('写入模式')" path="writeMode">
-      <section class="column">
-        <n-radio-group v-model:value="model.writeMode" name="writeMode">
-          <n-space>
-            <n-radio value="1">
-              {{ $t("append") }}
-            </n-radio>
-            <n-radio value="2">
-              {{ $t("overlay") }}
-            </n-radio>
-          </n-space>
-        </n-radio-group>
-        <span class="tip">{{ writeModeTip }}</span>
-      </section>
-    </n-form-item>
+      <n-form-item :label="$t('写入模式')" path="writeMode">
+        <section class="column">
+          <n-radio-group v-model:value="model.writeMode" name="writeMode">
+            <n-space>
+              <n-radio value="1">
+                {{ $t("append") }}
+              </n-radio>
+              <n-radio value="2">
+                {{ $t("overlay") }}
+              </n-radio>
+            </n-space>
+          </n-radio-group>
+          <span class="tip">{{ writeModeTip }}</span>
+        </section>
+      </n-form-item>
 
-    <n-form-item :label="$t('选择模式')" path="selectedMode">
-      <section class="column">
-        <n-radio-group v-model:value="model.selectedMode" name="selectedMode">
-          <n-space>
-            <n-radio value="1">
-              {{ $t("radio") }}
-            </n-radio>
-            <n-radio value="2">
-              {{ $t("multiple") }}
-            </n-radio>
-          </n-space>
-        </n-radio-group>
-        <span class="tip">
-          {{ $t("只对顶层项目生效，每个文件夹可设置自己的选择模式。") }}
-        </span>
-      </section>
-    </n-form-item>
+      <n-form-item :label="$t('选择模式')" path="selectedMode">
+        <section class="column">
+          <n-radio-group v-model:value="model.selectedMode" name="selectedMode">
+            <n-space>
+              <n-radio value="1">
+                {{ $t("radio") }}
+              </n-radio>
+              <n-radio value="2">
+                {{ $t("multiple") }}
+              </n-radio>
+            </n-space>
+          </n-radio-group>
+          <span class="tip">
+            {{ $t("只对顶层项目生效，每个文件夹可设置自己的选择模式。") }}
+          </span>
+        </section>
+      </n-form-item>
 
-    <n-form-item :label="$t('显示托盘标题')" path="palletTitle">
-      <n-switch v-model:value="model.palletTitle" />
-    </n-form-item>
+      <n-form-item :label="$t('显示托盘标题')" path="palletTitle">
+        <n-switch v-model:value="model.palletTitle" />
+      </n-form-item>
 
-    <n-form-item :label="$t('启动时隐藏')" path="hideAtStartup">
-      <n-switch v-model:value="model.hideAtStartup" />
-    </n-form-item>
-  </n-form>
+      <n-form-item :label="$t('启动时隐藏')" path="hideAtStartup">
+        <n-switch v-model:value="model.hideAtStartup" />
+      </n-form-item>
+    </n-form>
+  </n-scrollbar>
+
   <!-- footer -->
   <section class="row f-end a-center">
     <n-space class="user-control a-center">
@@ -144,9 +131,6 @@ function cancel() {
 </template>
 
 <style lang="stylus" scoped>
-.form
-  height calc(100% - 34px)
-
 .tip
   color #718096
   font-size 12px

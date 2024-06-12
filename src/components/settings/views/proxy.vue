@@ -49,7 +49,7 @@ function cancel() {
   <n-form
     ref="formRef"
     :model="model"
-    class="form"
+    class="!h-[calc(100%-34px)] pt-10px"
     label-placement="left"
     label-width="auto"
     require-mark-placement="right-hanging"

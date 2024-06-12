@@ -5,16 +5,14 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'
-
-import { onBeforeMount, ref, watchEffect } from 'vue'
 import Cmd from './views/cmd.vue'
+import { storeToRefs } from 'pinia'
 import Proxy from './views/proxy.vue'
 import General from './views/general.vue'
 import Advanced from './views/advanced.vue'
-import { getUserInfo } from '@/utils/index'
-import { useSettingsStore } from '@/store/useSettings'
 import { APP_NAME } from '@/utils/constant'
+import { onBeforeMount, ref, watchEffect } from 'vue'
+import { useSettingsStore } from '@/store/useSettings'
 
 const showModal = ref(false)
 const store = useSettingsStore()
@@ -25,12 +23,11 @@ function onClose() {
 }
 
 onBeforeMount(async () => {
-  const data = await getUserInfo()
   store.setSettingsByData(
     {
-      user: data,
+      user: {} as any,
       advanced: {
-        hostsPath: `${data.home}/.${APP_NAME}`,
+        hostsPath: `${''}/.${APP_NAME}`,
       },
     },
     false,
@@ -62,7 +59,7 @@ watchEffect(() => {
       size="large"
       animated
       style="margin: 0 -4px"
-      pane-style="height: 430px; padding-left: 4px; padding-right: 4px; box-sizing: border-box;"
+      pane-style="height: 430px; padding: 0 4px; box-sizing: border-box;"
     >
       <!-- 通用 -->
       <n-tab-pane name="general" :tab="$t('general')">

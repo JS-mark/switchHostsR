@@ -1,17 +1,16 @@
-<script lang="ts">
-export default {
-  name: 'Editor',
-}
-</script>
-
 <script lang="ts" setup>
 import useMonaco from './monaco'
 import { useLoadingBar } from 'naive-ui'
 import { useSettingsStore } from '@/store'
-import { onMounted, onUnmounted, reactive, watchEffect } from 'vue'
+import { onMounted, onUnmounted, reactive } from 'vue'
+
+defineOptions({
+  name: 'Editor'
+})
 
 const props = withDefaults(
   defineProps<{
+    id: string
     modelValue: string
     language?: string
     format?: boolean
@@ -20,7 +19,7 @@ const props = withDefaults(
   }>(),
   {
     modelValue: '',
-    language: 'hosts',
+    language: 'shell',
     preComment: '',
     format: true,
     options: () => ({}),
@@ -46,26 +45,31 @@ const data = reactive({
   origin: '',
 })
 
-const { updateVal, useEditor, switchTheme, destroy, createEditor, onFormatDoc } = useMonaco(
+const {
+  updateVal,
+  useEditor,
+  switchTheme,
+  destroy,
+  createEditor,
+  onFormatDoc
+} = useMonaco(
   props.language,
 )
 
 function initEditor() {
-  const el = document.querySelector('#container')
+  const el = document.querySelector(`#${props.id}`)
 
   if (el)
-    createEditor(el as HTMLElement, props.options)
-  else
-    destroy()
+    createEditor(props.id, el as HTMLElement, props.options)
 }
 
-function getValue(): Promise<{ [key: string]: unknown }> {
+function getValue(): Promise<string | Record<string, any>> {
   return new Promise((resolve, reject) => {
     loadingBar.start()
-    useEditor((editor) => {
+    useEditor(props.id, (editor) => {
       try {
         loadingBar.finish()
-        resolve(JSON.parse(editor?.getValue()))
+        resolve(editor?.getValue())
       }
       catch (error) {
         loadingBar.error()
@@ -76,7 +80,7 @@ function getValue(): Promise<{ [key: string]: unknown }> {
 }
 
 function initEditorEvent() {
-  useEditor((editor) => {
+  useEditor(props.id, (editor) => {
     editor.onDidFocusEditorText(() => {
       emits('focus')
     })
@@ -95,24 +99,37 @@ function initEditorEvent() {
   })
 }
 
-function updateMonacoVal(_val?: string, format?: boolean) {
+/**
+ * 更新值
+ * @param _val
+ * @param format
+ */
+const updateMonacoVal = (_val?: string, format?: boolean) =>{
   const { modelValue, preComment } = props
   const val = preComment
     ? `${preComment}\n${_val || modelValue}`
     : _val || modelValue
-  updateVal(val, format)
+  updateVal(props.id, val, format)
+}
+
+
+
+/**
+ * 更新值
+ * @param value
+ */
+const setValue = (value: string) => {
+  data.value = value
+  updateMonacoVal(value, props.format)
 }
 
 defineExpose({
   useEditor,
   getValue,
+  setValue,
   onFormatDoc,
 })
 
-watchEffect(() => {
-  data.value = props.modelValue
-  switchTheme(appSettings.theme)
-})
 
 onMounted(() => {
   loadingBar.start()
@@ -121,19 +138,19 @@ onMounted(() => {
     initEditorEvent()
     // 保留原始数据
     data.origin = props.modelValue
-    updateMonacoVal(props.modelValue, props.format)
+    switchTheme(props.id, appSettings.theme)
     loadingBar.finish()
   }, 100)
 })
 
 onUnmounted(() => {
-  destroy()
+  destroy(props.id)
 })
 </script>
 
 <template>
   <div class="editor__box">
-    <div id="container" class="editor__box__container" />
+    <div :id="id" class="editor__box__container" />
   </div>
 </template>
 
