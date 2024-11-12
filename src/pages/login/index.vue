@@ -1,12 +1,13 @@
 <script lang="ts">
 import { storeToRefs } from 'pinia'
-import { defineComponent, reactive, ref } from 'vue'
+import { debugUser } from '@/utils'
 import { useUserStore } from '@/store'
+import { defineComponent, reactive, ref } from 'vue'
+
 import Login from './login.vue'
+import { mixins } from './mixins'
 import Register from './register.vue'
 import ThirdLogin from './third-login.vue'
-import { mixins } from './mixins'
-import { debugUser } from '@/utils'
 
 // 调试用
 debugUser()

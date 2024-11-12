@@ -1,6 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
+
 import { ApertureOutline, Home, ListCircle, Text } from '@vicons/ionicons5'
-import { genSidersMenus, generateRoutes, processRoutes } from './utils'
+
+import { generateRoutes, genSidersMenus, processRoutes } from './utils'
 
 export * from './utils'
 export const routes: RouteRecordRaw[] = [

@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
-import { formatTimeV2 } from '@/utils'
 import { getAllUsers } from '@/apis'
+import { formatTimeV2 } from '@/utils'
 import { h, onMounted, reactive } from 'vue'
-
 import { type DataTableColumns, NButton, NSpace, NSwitch, NTag, useMessage } from 'naive-ui'
 
 defineOptions({
@@ -26,15 +25,15 @@ interface User {
 const { t } = useI18n()
 const message = useMessage()
 
-const editUser = (user: User) => {
+function editUser(user: User) {
   message.info(`编辑用户：${user.name}`)
 }
 
-const switchUser = (user: User, status: boolean) => {
+function switchUser(user: User, status: boolean) {
   message.info(`删除用户：${user.name}, ${status}`)
 }
 
-const delUser = (user: User) => {
+function delUser(user: User) {
   message.info(`删除用户：${user.name}`)
 }
 

@@ -1,6 +1,7 @@
 import { insertLog } from '@/apis'
-import { getSystemInfo } from './index'
 import { useSettingsStore } from '@/store'
+
+import { getSystemInfo } from './index'
 
 export type LevelType = 'error' | 'warn' | 'system'
 
@@ -30,6 +31,7 @@ export async function sendLog(options: Options): Promise<void> {
     insertLog(2, data)
     console.warn('可以发送日志', data)
   }
-  else
+  else {
     console.warn('不可以发送日志', data)
+  }
 }

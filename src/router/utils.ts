@@ -1,6 +1,7 @@
-import { h } from 'vue'
-import type { RouteRecordRaw } from 'vue-router'
 import type { MenuOption } from 'naive-ui'
+import type { RouteRecordRaw } from 'vue-router'
+
+import { h } from 'vue'
 import { Home } from '@vicons/ionicons5'
 
 export function processRoutes(routes: RouteRecordRaw[], parentPath = '') {

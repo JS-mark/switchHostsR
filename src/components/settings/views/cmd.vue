@@ -8,11 +8,13 @@ export default {
 </script>
 
 <script lang="ts" setup>
+import type { SettingSpace } from '@/store/useSettings'
+
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import { onBeforeMount, reactive } from 'vue'
+import { useEditor } from '@/components/editor/hook'
 import { useSettingsStore } from '@/store/useSettings'
-import type { SettingSpace } from '@/store/useSettings'
 
 const store = useSettingsStore()
 const message = useMessage()
@@ -25,14 +27,20 @@ const modelData = reactive<SettingSpace.Cmd & {
 })
 
 onBeforeMount(() => {
-  for (const [key, value] of Object.entries(store.cmd))
+  for (const [key, value] of Object.entries(store.cmd)) {
     Reflect.set(modelData, key, value)
+  }
+  // 更新编辑器数据
+  useEditor('cmd-editor', (editor) => {
+    editor.setValue(modelData.cmd)
+  })
+  console.log(modelData)
 })
 
 function confirm() {
-  cancel()
   store.setSettingsByData({ cmd: modelData })
   message.success(t('更新配置成功！'))
+  cancel()
 }
 function cancel() {
   store.hide()
@@ -42,9 +50,16 @@ function cancel() {
 <template>
   <div class="h-[calc(100%-44px)] pt-10px">
     <!-- shell 编辑器 -->
-    <editor class="editor" v-model="modelData.cmd" language="shell" id="cmd-editor" :options="{
-      readOnly: false
-    }" :format="true" />
+    <editor
+      id="cmd-editor"
+      v-model="modelData.cmd"
+      class="editor"
+      language="shell"
+      :options="{
+        readOnly: false,
+      }"
+      :format="true"
+    />
   </div>
   <!-- footer -->
   <section class="row f-end a-center">

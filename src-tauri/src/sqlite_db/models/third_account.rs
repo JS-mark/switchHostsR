@@ -18,7 +18,7 @@ pub struct ThirdAccount {
 #[derive(Insertable)]
 #[table_name = "third_account"]
 pub struct AddThirdAccount {
-    pub uid:  String,
+    pub uid: String,
     pub user_id: Option<i32>, // 注意这是一个 Option 类型
     pub account: String,
     pub email: String,

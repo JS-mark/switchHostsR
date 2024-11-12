@@ -2,19 +2,21 @@
  * @Author: Mark
  * @Date: 2021-11-08 16:30:38
  * @LastEditors: Mark
- * @LastEditTime: 2023-12-21 18:03:22
+ * @LastEditTime: 2024-11-05 15:50:08
  * @Description: fetch 类
  */
 import type {
   ConfigProviderProps,
 } from 'naive-ui'
+
+import axios from 'axios'
+import { computed, ref } from 'vue'
 import {
   createDiscreteApi,
   darkTheme,
   lightTheme,
 } from 'naive-ui'
-import axios from 'axios'
-import { computed, ref } from 'vue'
+
 import Request, { type ReqOptions } from './request'
 
 const themeRef = ref<'light' | 'dark'>('light')

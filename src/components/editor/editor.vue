@@ -1,16 +1,19 @@
 <script lang="ts" setup>
-import useMonaco from './monaco'
-import { useLoadingBar } from 'naive-ui'
+import type { editor } from 'monaco-editor/esm/vs/editor/editor.api'
+
 import { useSettingsStore } from '@/store'
+import { useNaiveApi } from '@/plugins/naive-api'
 import { onMounted, onUnmounted, reactive } from 'vue'
 
+import useMonaco from './monaco'
+import { useEditor } from './hook'
+
 defineOptions({
-  name: 'Editor'
+  name: 'Editor',
 })
 
 const props = withDefaults(
   defineProps<{
-    id: string
     modelValue: string
     language?: string
     format?: boolean
@@ -34,39 +37,55 @@ const emits = defineEmits<{
   }): void
   (event: 'focus'): void
   (event: 'blur'): void
+  (event: 'ready', value: editor.IStandaloneCodeEditor): void
 }>()
-
 const appSettings = useSettingsStore()
-
-const loadingBar = useLoadingBar()
+const { loadingBar, notification } = useNaiveApi()
 
 const data = reactive({
   value: '',
   origin: '',
+  isLoading: false,
+  containerId: '',
+  isInitError: false,
 })
 
 const {
+  id,
   updateVal,
-  useEditor,
   switchTheme,
   destroy,
   createEditor,
-  onFormatDoc
+  onFormatDoc,
 } = useMonaco(
   props.language,
 )
 
-function initEditor() {
-  const el = document.querySelector(`#${props.id}`)
+data.containerId = id
 
-  if (el)
-    createEditor(props.id, el as HTMLElement, props.options)
+function initEditor() {
+  const el = document.querySelector(`#container__${id}`)
+  if (el) {
+    createEditor(el as HTMLElement, props.options, (editor) => {
+      emits('ready', editor)
+      data.isLoading = false
+    }).catch(() => {
+      data.isInitError = true
+      notification.error({
+        title: '系统提示',
+        content: '初始化失败, 请检查浏览器是否支持Monaco Editor',
+      })
+    })
+  }
+  else {
+    destroy(id)
+  }
 }
 
 function getValue(): Promise<string | Record<string, any>> {
   return new Promise((resolve, reject) => {
     loadingBar.start()
-    useEditor(props.id, (editor) => {
+    useEditor(id, (editor) => {
       try {
         loadingBar.finish()
         resolve(editor?.getValue())
@@ -80,7 +99,7 @@ function getValue(): Promise<string | Record<string, any>> {
 }
 
 function initEditorEvent() {
-  useEditor(props.id, (editor) => {
+  useEditor(id, (editor) => {
     editor.onDidFocusEditorText(() => {
       emits('focus')
     })
@@ -99,67 +118,92 @@ function initEditorEvent() {
   })
 }
 
-/**
- * 更新值
- * @param _val
- * @param format
- */
-const updateMonacoVal = (_val?: string, format?: boolean) =>{
+function updateMonacoVal(_val?: string, format?: boolean) {
   const { modelValue, preComment } = props
   const val = preComment
     ? `${preComment}\n${_val || modelValue}`
     : _val || modelValue
-  updateVal(props.id, val, format)
+  updateVal(val, format)
 }
 
-
-
-/**
- * 更新值
- * @param value
- */
-const setValue = (value: string) => {
+function setValue(value: string) {
   data.value = value
   updateMonacoVal(value, props.format)
 }
 
-defineExpose({
-  useEditor,
-  getValue,
-  setValue,
-  onFormatDoc,
-})
-
-
-onMounted(() => {
+function init() {
+  data.isLoading = true
   loadingBar.start()
   setTimeout(() => {
     initEditor()
     initEditorEvent()
     // 保留原始数据
     data.origin = props.modelValue
-    switchTheme(props.id, appSettings.theme)
+    switchTheme(appSettings.theme)
     loadingBar.finish()
   }, 100)
+}
+
+function onRetry() {
+  data.isInitError = false
+  initEditor()
+  // 更新值
+  updateMonacoVal(data.value, props.format)
+  // 重新初始化
+  init()
+}
+
+defineExpose({
+  getId() {
+    return id
+  },
+  useEditor,
+  getValue,
+  setValue,
+  onFormatDoc,
+  destroy,
+})
+
+onMounted(() => {
+  init()
 })
 
 onUnmounted(() => {
-  destroy(props.id)
+  destroy(id)
 })
 </script>
 
 <template>
-  <div class="editor__box">
-    <div :id="id" class="editor__box__container" />
+  <div class="editor__box relative">
+    <div v-if="data.isLoading" class="absolute left-1/2 top-1/2 flex justify-center items-center">
+      <n-spin :show="data.isLoading" :size="23">
+        <template #description>
+          加载中...
+        </template>
+      </n-spin>
+    </div>
+    <div v-show="!data.isInitError" :id="`container__${data.containerId}`" class="editor__box__container" />
+    <n-result
+      v-if="data.isInitError" class="h-500px flex justify-center flex-col" status="404" title="资源不存在"
+      description=""
+    >
+      <template #footer>
+        <n-button @click="onRetry">
+          点击重试
+        </n-button>
+      </template>
+    </n-result>
   </div>
 </template>
 
-<style lang="stylus" scoped>
-.editor__box
-  width 100%
-  height 100%
+<style lang="less" scoped>
+.editor__box {
+  width: 100%;
+  height: 100%;
 
-  &__container
-    width 100%
-    height 100%
+  &__container {
+    width: 100%;
+    height: 100%;
+  }
+}
 </style>

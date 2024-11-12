@@ -1,14 +1,16 @@
 <script lang="ts">
-import { useMessage } from 'naive-ui'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { addUser } from '@/apis'
-import { mixins } from './mixins'
-import { useUserStore } from '@/store'
-import { debounce } from 'lodash-es'
 import type { FormInst, FormItemRule } from 'naive-ui'
+
+import { addUser } from '@/apis'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { debounce } from 'lodash-es'
+import { useMessage } from 'naive-ui'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
+
+import { mixins } from './mixins'
 
 export default defineComponent({
   name: 'Register',
@@ -98,7 +100,7 @@ export default defineComponent({
           trigger: ['blur', 'input'],
           message: t('请输入正确邮箱'),
           validator: (rule: FormItemRule, value: string) => {
-            return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
+            return /^[\w.%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)
           },
         },
       },

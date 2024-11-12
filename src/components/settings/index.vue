@@ -5,14 +5,15 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import Cmd from './views/cmd.vue'
 import { storeToRefs } from 'pinia'
-import Proxy from './views/proxy.vue'
-import General from './views/general.vue'
-import Advanced from './views/advanced.vue'
 import { APP_NAME } from '@/utils/constant'
 import { onBeforeMount, ref, watchEffect } from 'vue'
 import { useSettingsStore } from '@/store/useSettings'
+
+import Cmd from './views/cmd.vue'
+import Proxy from './views/proxy.vue'
+import General from './views/general.vue'
+import Advanced from './views/advanced.vue'
 
 const showModal = ref(false)
 const store = useSettingsStore()

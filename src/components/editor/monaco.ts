@@ -1,44 +1,15 @@
-import 'monaco-editor/esm/vs/editor/editor.all.js'
-import 'monaco-editor/esm/vs/language/json/monaco.contribution'
-import 'monaco-editor/esm/vs/basic-languages/monaco.contribution'
-import 'monaco-editor/esm/vs/basic-languages/shell/shell.contribution'
-import * as monaco from 'monaco-editor'
+import type { Monaco } from '@monaco-editor/loader'
+import type { editor } from 'monaco-editor/esm/vs/editor/editor.api'
+
+import { nanoid } from 'nanoid'
+import { delay } from 'lodash-es'
 import { useDark } from '@vueuse/core'
-import emitter from '@/plugins/emitter'
-import './languages/index'
+import loader from '@monaco-editor/loader'
 
-export { monaco }
+import { clearEditor, setEditor, useEditor } from './hook'
 
-export function useMonacoEditor() {
-  self.MonacoEnvironment = {
-    getWorker(workerId, label) {
-      const getWorkerModule = (moduleUrl: string, label: string) => {
-        // @ts-expect-error
-        return new Worker(self.MonacoEnvironment?.getWorkerUrl(moduleUrl as string, label as string), {
-          name: label,
-          type: 'module',
-        })
-      }
-
-      switch (label) {
-        case 'json':
-          return getWorkerModule('/monaco-editor/esm/vs/language/json/json.worker?worker', label)
-        case 'css':
-        case 'scss':
-        case 'less':
-          return getWorkerModule('/monaco-editor/esm/vs/language/css/css.worker?worker', label)
-        case 'html':
-        case 'handlebars':
-        case 'razor':
-          return getWorkerModule('/monaco-editor/esm/vs/language/html/html.worker?worker', label)
-        case 'typescript':
-        case 'javascript':
-          return getWorkerModule('/monaco-editor/esm/vs/language/typescript/ts.worker?worker', label)
-        default:
-          return getWorkerModule('/monaco-editor/esm/vs/editor/editor.worker?worker', label)
-      }
-    },
-  }
+export interface CancelablePromise<T> extends Promise<T> {
+  cancel: () => void
 }
 
 /**
@@ -47,6 +18,7 @@ export function useMonacoEditor() {
  * @returns { void }
  */
 export default function useMonaco(language = 'shell') {
+  const id = nanoid()
   const isDark = useDark({
     selector: 'body',
     attribute: 'color-scheme',
@@ -55,33 +27,22 @@ export default function useMonaco(language = 'shell') {
   })
   let initReadOnly = false
 
-  const useEditor = (
-    id: string,
-    cb: (editor: monaco.editor.IStandaloneCodeEditor) => void,
-  ) => {
-    if (window.__MonacoEditor) {
-      cb(window.__MonacoEditor[id] as monaco.editor.IStandaloneCodeEditor)
-      return
-    }
-    console.warn('editor not ready! 通过 cb 执行！')
-
-    emitter.on('ready', (editor: monaco.editor.IStandaloneCodeEditor) => {
-      cb(editor)
-      emitter.off('ready')
+  const onFormatDoc = () => {
+    useEditor(id, async (editor) => {
+      editor?.updateOptions({ readOnly: true })
+      delay(async () => {
+        await editor?.getAction('editor.action.formatDocument')?.run()
+      }, 100)
+      editor?.updateOptions({ readOnly: initReadOnly })
     })
   }
 
-  const updateVal = async (id: string, val: string, format = true) => {
+  const updateVal = async (val: string, format = true) => {
     useEditor(id, (editor) => {
       editor?.setValue(val)
+
+      format && setTimeout(onFormatDoc, 100)
     })
-    setTimeout(() => {
-      useEditor(id, async (editor) => {
-        editor?.updateOptions({ readOnly: initReadOnly })
-        format
-          && (await editor?.getAction('editor.action.formatDocument')?.run())
-      })
-    }, 100)
   }
 
   const getTheme = (theme: 'dark' | 'light' | 'auto', language: string) => {
@@ -111,7 +72,7 @@ export default function useMonaco(language = 'shell') {
     }
   }
 
-  const switchTheme = (id: string, theme: 'dark' | 'light' | 'auto') => {
+  const switchTheme = (theme: 'dark' | 'light' | 'auto') => {
     const theme_ = getTheme(theme, language)
     useEditor(id, (editor) => {
       editor.updateOptions({
@@ -121,58 +82,68 @@ export default function useMonaco(language = 'shell') {
   }
 
   const createEditor = (
-    id: string,
     el: HTMLElement | null,
-    editorOption: monaco.editor.IStandaloneEditorConstructionOptions = {},
-  ) => {
-    if (window.__MonacoEditor && window.__MonacoEditor[id])
-      return
-    if (!window.__MonacoEditor) {
-      window.__MonacoEditor = {}
-    }
-    initReadOnly = !!editorOption.readOnly
-    const theme = getTheme('auto', language)
-
-    window.__MonacoEditor[id]
-      = el
-      && (monaco.editor.create(el, {
-        value: '',
-        language,
-        foldingStrategy: 'indentation', // 代码可分小段折叠
-        overviewRulerBorder: false, // 不要滚动条的边框
-        minimap: { enabled: false },
-        theme,
-        lineNumbers: 'on',
-        multiCursorModifier: 'ctrlCmd',
-        scrollbar: {
-          verticalScrollbarSize: 8,
-          horizontalScrollbarSize: 8,
+    editorOption: editor.IStandaloneEditorConstructionOptions = {},
+    onReady: (editor: editor.IStandaloneCodeEditor) => void,
+    onInit?: (event: CancelablePromise<Monaco>) => void,
+  ): Promise<editor.IStandaloneCodeEditor | void> => {
+    loader.config({
+      'paths': {
+        vs: '/vs',
+      },
+      'vs/nls': {
+        availableLanguages: {
+          '*': 'zh-cn',
         },
-        tabSize: 2,
-        automaticLayout: true, // 自适应宽高
-        ...editorOption,
-      }) as unknown as monaco.editor.IStandaloneCodeEditor)
-    // 编辑器 ready
-    emitter.emit('ready', window.__MonacoEditor)
-    return window.__MonacoEditor
+      },
+    })
+    const monacoCtrl = loader.init()
+    onInit && onInit(monacoCtrl)
+    return new Promise((resolve, reject) => {
+      monacoCtrl.then((monaco) => {
+        initReadOnly = !!editorOption.readOnly
+        const theme = getTheme('dark', language)
+
+        const __MonacoEditor
+          = el
+          && (monaco.editor.create(el, {
+            value: '',
+            language,
+            foldingStrategy: 'indentation', // 代码可分小段折叠
+            overviewRulerBorder: false, // 不要滚动条的边框
+            minimap: { enabled: false },
+            theme,
+            lineNumbers: 'on',
+            multiCursorModifier: 'ctrlCmd',
+            scrollbar: {
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+            },
+            tabSize: 2,
+            automaticLayout: true, // 自适应宽高
+            ...editorOption,
+          }) as unknown as editor.IStandaloneCodeEditor)
+        // 编辑器 ready
+
+        if (!__MonacoEditor)
+          return
+        setEditor(id, __MonacoEditor)
+        onReady(__MonacoEditor)
+        resolve(__MonacoEditor)
+      }).catch(err => reject(err))
+    })
   }
 
   const destroy = (id: string) => {
     useEditor(id, (editor) => {
-      editor.dispose()
-      window.__MonacoEditor[id] = null
-    })
-  }
-
-  const onFormatDoc = (id: string) => {
-    useEditor(id, (editor) => {
-      editor?.getAction('editor.action.formatDocument')?.run()
+      editor?.dispose()
+      clearEditor(id)
     })
   }
 
   return {
+    id,
     updateVal,
-    useEditor,
     destroy,
     switchTheme,
     createEditor,

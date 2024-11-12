@@ -1,24 +1,21 @@
-<script lang="ts">
-export default {
-  name: 'LSider',
-}
-</script>
-
 <script lang="ts" setup>
+import { bottomMenus } from '@/utils/menu'
+import { globalEventEmitter } from '@/utils'
+import { HistoryMenus } from '@/router/history'
 import { type MenuOption, NIcon } from 'naive-ui'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { defineAsyncComponent, h, onMounted, ref, shallowRef, watchEffect } from 'vue'
 import { CaretDownOutline, SettingsSharp } from '@vicons/ionicons5'
+import { defineAsyncComponent, h, onMounted, ref, shallowRef, watchEffect } from 'vue'
 import {
   menus as defaultMenus,
   defaultRoute,
   genSidersMenus,
 } from '@/router/routes'
-import emitter from '@/plugins/emitter'
-import { bottomMenus } from '@/utils/menu'
-import { HistoryMenus } from '@/router/history'
 
-const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
+defineOptions({
+  name: 'LSider',
+})
+const SvgIcon = defineAsyncComponent(() => import('@/components/svg-icon/svg.vue'))
 const route = useRoute()
 const router = useRouter()
 const menus = shallowRef<MenuOption[]>(defaultMenus)
@@ -80,14 +77,14 @@ function expandIcon() {
   return h(NIcon, null, { default: () => h(CaretDownOutline) })
 }
 
-emitter.on('onAddRoute', () => {
+globalEventEmitter.on('on-add-route', () => {
   setTimeout(() => {
     const routes = router.getRoutes()
     menus.value = genSidersMenus(routes)
   }, 0)
 })
 
-emitter.on('onRestoreHistoryRoute', (list) => {
+globalEventEmitter.on('on-restore-history-route', (list) => {
   list.forEach((item) => {
     item.meta!.icon = SettingsSharp
     router.addRoute(item)

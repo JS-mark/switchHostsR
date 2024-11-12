@@ -52,8 +52,8 @@ pub fn create_app_state() -> AppState {
     // 创建数据库连接
     let conn = create_pool();
     // 创建 db
-    let user_db =
-        handler::users::Database::new(conn.clone(), 0).expect("Unable to create database connection");
+    let user_db = handler::users::Database::new(conn.clone(), 0)
+        .expect("Unable to create database connection");
     let logs_db = handler::logs::Database::new(conn.clone(), 0)
         .expect("Unable to create database connection");
     let hosts_db = handler::hosts::Database::new(conn.clone(), 0)

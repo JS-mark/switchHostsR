@@ -1,6 +1,8 @@
 import type { AxiosRequestHeaders, AxiosResponse } from 'axios'
-import { mock, online, test } from './config'
+
 import { getRandID, getType } from '@/utils'
+
+import { mock, online, test } from './config'
 
 export interface ReqOptions {
   method: 'get' | 'post' | 'put' | 'delete'
@@ -81,7 +83,7 @@ abstract class Request {
    * @param {*} config
    */
   getURl(config: ReqOptions['config'], url: GetUrlOption['url']) {
-    if (/http(s)\:\/\//gi.test(url))
+    if (/http(s):\/\//i.test(url))
       return url
 
     if (!config)

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
-import { formatTimeV2, sendLog } from '@/utils'
 import { getAllLogs } from '@/apis'
 import { h, onMounted, reactive } from 'vue'
+import { formatTimeV2, sendLog } from '@/utils'
 import { type DataTableColumns, NTag } from 'naive-ui'
 
 defineOptions({

@@ -2,8 +2,13 @@
 import { useRoute } from 'vue-router'
 import { computed, defineComponent } from 'vue'
 
+import Provider from './layout/provider.vue'
+
 export default defineComponent({
   name: 'App',
+  components: {
+    Provider,
+  },
   setup() {
     const route = useRoute()
     const title = computed(() => {

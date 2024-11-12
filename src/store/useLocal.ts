@@ -1,8 +1,9 @@
-import { defineStore } from 'pinia'
 import type { RouteRecordRaw } from 'vue-router'
-import emitter from '@/plugins/emitter'
+import type { CreateLocalHostsData } from '@/types'
+
+import { defineStore } from 'pinia'
+import { globalEventEmitter } from '@/utils'
 import { setHistory } from '@/router/history'
-import type { CreateLocalHostsData } from '@/types/index'
 
 export const useLocalStore = defineStore('local', {
   state: () => ({
@@ -43,7 +44,7 @@ export const useLocalStore = defineStore('local', {
       // 插入数据
       setHistory(space, data)
       // 触发事件更新
-      emitter.emit('onAddRoute')
+      globalEventEmitter.emit('onAddRoute')
       cb && cb(route)
     },
     restore(list: { space: string, data: RouteRecordRaw }[]) {
@@ -65,7 +66,7 @@ export const useLocalStore = defineStore('local', {
         // 触发事件更新
         arr.push(route)
       })
-      emitter.emit('onRestoreHistoryRoute', arr)
+      globalEventEmitter.emit('onRestoreHistoryRoute', arr)
     },
     clear(space: string) {
       if (!space)
@@ -74,7 +75,7 @@ export const useLocalStore = defineStore('local', {
     },
     destroy() {
       this.hosts = new Map()
-      emitter.off('onAddRoute')
+      globalEventEmitter.off('onAddRoute')
     },
     getSpace(space: string) {
       return `${this.name}__${space}`

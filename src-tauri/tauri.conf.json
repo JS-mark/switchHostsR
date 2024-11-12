@@ -2,76 +2,68 @@
   "build": {
     "beforeDevCommand": "pnpm dev:tauri",
     "beforeBuildCommand": "pnpm build:tauri",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": true
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "edit-hosts-tauri",
-    "version": "0.0.1"
-  },
-  "tauri": {
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": true
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "",
+    "targets": "all",
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
     },
-    "allowlist": {
-      "all": true,
-      "shell": {
-        "all": false,
-        "open": true
+    "longDescription": "",
+    "macOS": {
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        },
+        "windowSize": {
+          "height": 400,
+          "width": 660
+        }
       },
-      "fs": {
-        "all": true,
-        "scope": [
-          "*",
-          "$DOWNLOAD/*"
-        ]
-      },
-      "window": {
-        "all": true
-      }
+      "files": {},
+      "hardenedRuntime": true,
+      "minimumSystemVersion": "10.13"
     },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
+    "android": {
+      "minSdkVersion": 24
+    },
+    "createUpdaterArtifacts": false,
+    "iOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "resources": [],
+    "shortDescription": "",
+    "linux": {
       "deb": {
         "depends": []
-      },
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "com.mark.switchhostsR",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
       }
-    },
-    "security": {
-      "csp": null
-    },
-    "updater": {
-      "active": false
-    },
-    "macOSPrivateApi": true,
+    }
+  },
+  "productName": "switch-hosts-r",
+  "mainBinaryName": "switch-hosts-r",
+  "version": "0.0.1",
+  "identifier": "com.mark.switchhostsR",
+  "plugins": {},
+  "app": {
     "windows": [
       {
         "width": 800,
@@ -84,6 +76,15 @@
         "decorations": false,
         "transparent": true
       }
-    ]
+    ],
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
   }
 }

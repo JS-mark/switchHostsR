@@ -1,14 +1,16 @@
 <script lang="ts">
-import { useMessage } from 'naive-ui'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { getUser } from '@/apis/user'
-import { thirdAccountLogin } from '@/apis'
-import { mixins } from './mixins'
-import { computed, defineComponent, reactive, ref } from 'vue'
-import { type UserMode, useUserStore } from '@/store'
 import type { FormInst } from 'naive-ui'
+
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { useMessage } from 'naive-ui'
+import { getUser } from '@/apis/user'
+import { useRouter } from 'vue-router'
+import { thirdAccountLogin } from '@/apis'
+import { type UserMode, useUserStore } from '@/store'
+import { computed, defineComponent, reactive, ref } from 'vue'
+
+import { mixins } from './mixins'
 
 export default defineComponent({
   name: 'ThirdLogin',
@@ -82,7 +84,8 @@ export default defineComponent({
               }).catch((err) => {
                 return Promise.reject(err)
               })
-            }).finally(() => {
+            })
+            .finally(() => {
               mixins.loading = false
             })
         }

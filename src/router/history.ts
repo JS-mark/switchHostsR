@@ -1,5 +1,6 @@
-import { useLocalStore } from '@/store'
 import type { CreateLocalHostsData } from '@/types'
+
+import { useLocalStore } from '@/store'
 
 const HISTORY_NAME = '__LocalHostsLists'
 

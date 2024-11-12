@@ -17,7 +17,7 @@ export function openFile(file?: string) {
       reject(error)
     }
   }, (bridge, resolve, reject) => {
-    bridge.invoke('openFile', {
+    bridge.core.invoke('openFile', {
       file,
     }).then(resolve).catch(reject)
   })
@@ -41,7 +41,7 @@ export function openDirectory(file?: string) {
       reject(error)
     }
   }, (bridge, resolve, reject) => {
-    bridge.invoke('openDirectory', {
+    bridge.core.invoke('openDirectory', {
       file,
     }).then(resolve).catch(reject)
   })

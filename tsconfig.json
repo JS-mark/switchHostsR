@@ -9,9 +9,14 @@
     "moduleResolution": "Node",
     "paths": {
       "@/*": ["./src/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "/#/*": ["types/*"]
     },
     "resolveJsonModule": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules"
+    ],
     "types": ["utools-api-types", "naive-ui/volar"],
     "strict": true,
     "sourceMap": true,

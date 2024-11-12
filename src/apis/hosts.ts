@@ -1,4 +1,5 @@
 import { useBridgeFunc } from '@/utils'
+
 import type { GetPage, ListResult } from './public'
 
 export interface Hosts {
@@ -18,12 +19,12 @@ export interface Hosts {
 
 export type HostsData = Omit<Hosts, 'id' | 'is_del' | 'created_at' | 'updated_at' | 'hosts_refresh_time' | 'last_refresh_time' | 'status' | 'is_readonly'>
 
-export const getAllHosts = (options: GetPage) => {
+export function getAllHosts(options: GetPage) {
   return useBridgeFunc<ListResult<Hosts>>(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.invoke('get_all_hosts_data', options)
-      .then((res) => resolve(res))
+    bridge.core.invoke('get_all_hosts_data', options)
+      .then(res => resolve(res))
       .catch(err => reject(err))
   })
 }
@@ -33,14 +34,13 @@ export const getAllHosts = (options: GetPage) => {
  * @param id
  * @param data
  */
-export const updateHostsData = (id: number, data: HostsData) => {
+export function updateHostsData(id: number, data: HostsData) {
   return useBridgeFunc(() => {
     // NOTE: 暂未实现
   }, (bridge, resolve, reject) => {
-    bridge.invoke('update_host', {
+    bridge.core.invoke('update_host', {
       id,
       host: { ...data },
-    }).then(res => resolve(res))
-      .catch(err => reject(err))
+    }).then(res => resolve(res)).catch(err => reject(err))
   })
 }

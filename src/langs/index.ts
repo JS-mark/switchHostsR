@@ -1,4 +1,5 @@
 import { createI18n } from 'vue-i18n'
+
 import en from './en'
 import ja from './ja'
 import zhCN from './zh-cn'

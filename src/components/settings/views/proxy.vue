@@ -8,10 +8,11 @@ export default {
 </script>
 
 <script lang="ts" setup>
+import type { SettingSpace } from '@/store/useSettings'
+
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import { onBeforeMount, reactive, ref } from 'vue'
-import type { SettingSpace } from '@/store/useSettings'
 import { useSettingsStore } from '@/store/useSettings'
 
 const { t } = useI18n()

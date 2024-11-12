@@ -1,11 +1,11 @@
-import { resolve } from 'node:path'
-import process from 'node:process'
-import vue from '@vitejs/plugin-vue'
 import type { ConfigEnv } from 'vite'
+
+import process from 'node:process'
+import { resolve } from 'node:path'
+import vue from '@vitejs/plugin-vue'
 import WindiCSS from 'vite-plugin-windicss'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 
@@ -51,9 +51,6 @@ export function getBaseConfig(env: ConfigEnv) {
       Components({
         resolvers: [NaiveUiResolver()],
       }),
-
-      // @ts-expect-error
-      monacoEditorPlugin.default({}),
     ],
     resolve: {
       alias: {

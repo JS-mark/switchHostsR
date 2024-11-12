@@ -8,12 +8,13 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { useMessage } from 'naive-ui'
-import { useI18n } from 'vue-i18n'
-import { computed, onBeforeMount, reactive, ref } from 'vue'
-import { setDefaultLang, useLanguages } from '@/langs'
 import type { SettingSpace } from '@/store/useSettings'
+
+import { useI18n } from 'vue-i18n'
+import { useMessage } from 'naive-ui'
+import { setDefaultLang, useLanguages } from '@/langs'
 import { useSettingsStore } from '@/store/useSettings'
+import { computed, onBeforeMount, reactive, ref } from 'vue'
 
 const { t } = useI18n()
 const store = useSettingsStore()
@@ -59,9 +60,11 @@ function cancel() {
 </script>
 
 <template>
-  <n-scrollbar class="!h-[calc(100%-44px)] mb-10px pt-10px" >
-    <n-form ref="formRef" :model="model" label-placement="left" label-width="auto"
-      require-mark-placement="right-hanging">
+  <n-scrollbar class="!h-[calc(100%-44px)] mb-10px pt-10px">
+    <n-form
+      ref="formRef" :model="model" label-placement="left" label-width="auto"
+      require-mark-placement="right-hanging"
+    >
       <n-form-item :label="$t('language')" path="language">
         <n-select v-model:value="model.language" :placeholder="$t('选择语言')" :options="languages" value-field="key" />
       </n-form-item>

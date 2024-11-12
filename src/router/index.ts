@@ -1,8 +1,10 @@
 import type { App } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
-import routes from './routes'
+
 import { useUserStore } from '@/store'
 import { getLoginUser } from '@/utils'
+import { createRouter, createWebHashHistory } from 'vue-router'
+
+import routes from './routes'
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -31,7 +33,7 @@ router.beforeEach((to, from) => {
   return true
 })
 
-export function useRoutes(app: App, callback?: (app: App) => void) {
+export function useRouter(app: App, callback?: (app: App) => void) {
   app.use(router)
 
   if (callback instanceof Function) {

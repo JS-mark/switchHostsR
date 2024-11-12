@@ -1,10 +1,13 @@
 <script lang="ts" setup>
+import type { SettingSpace } from '@/store/useSettings'
+
 import { reactive, watchEffect } from 'vue'
 import { APP_NAME } from '@/utils/constant'
 import { useSettingsStore } from '@/store/useSettings'
-import type { SettingSpace } from '@/store/useSettings'
 import { openDirectory, openFile, sendLog } from '@/utils'
+
 import AdvancedCell from './components/advanced-cell.vue'
+
 defineOptions({
   name: 'Advanced',
 })
@@ -79,7 +82,6 @@ watchEffect(() => {
         </n-tooltip>
       </div>
     </AdvancedCell>
-
 
     <AdvancedCell :title="$t('我的数据储存在哪里？')">
       <div class="row a-center">

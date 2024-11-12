@@ -1,25 +1,23 @@
-<script lang="ts">
-export default {
-  name: 'LHeader',
-}
-</script>
-
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
+import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
+import { logoutPlatform } from '@/apis'
 import { defineAsyncComponent } from 'vue'
 import { APP_NAME } from '@/utils/constant'
 import { personalMenus, rightMenus } from '@/utils/menu'
 import { useHostsStore, useSettingsStore, useUserStore } from '@/store'
-import { logoutPlatform } from '@/apis'
-import { useMessage } from 'naive-ui'
+
+defineOptions({
+  name: 'LHeader',
+})
 
 const emits = defineEmits<{
   (event: 'onSettting'): void
   (event: 'onAddHosts'): void
 }>()
 const message = useMessage()
-const SvgIcon = defineAsyncComponent(() => import('@/components/svg.vue'))
+const SvgIcon = defineAsyncComponent(() => import('@/components/svg-icon/svg.vue'))
 const router = useRouter()
 const store = useSettingsStore()
 const userStore = useUserStore()
@@ -104,8 +102,10 @@ function onAddHosts() {
             {{ $t("添加新的 Hosts 内容") }}
           </n-tooltip>
           <!-- 设置 -->
-          <n-dropdown placement="bottom-end" trigger="hover" size="large" :options="rightMenus($t)" :show-arrow="true"
-            @select="onDropdownSelected">
+          <n-dropdown
+            placement="bottom-end" trigger="hover" size="large" :options="rightMenus($t)" :show-arrow="true"
+            @select="onDropdownSelected"
+          >
             <n-button strong secondary circle type="info">
               <template #icon>
                 <SvgIcon name="settings" size="16px" />
@@ -116,8 +116,10 @@ function onAddHosts() {
 
         <n-divider vertical />
         <n-space class="row f-end a-center">
-          <n-dropdown placement="bottom-end" trigger="hover" size="large" :options="personalMenus($t)"
-            :show-arrow="true" @select="onDropdownSelected">
+          <n-dropdown
+            placement="bottom-end" trigger="hover" size="large" :options="personalMenus($t)"
+            :show-arrow="true" @select="onDropdownSelected"
+          >
             <n-avatar round size="small" :src="info.avatar_url" />
           </n-dropdown>
         </n-space>

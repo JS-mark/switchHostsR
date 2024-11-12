@@ -1,3 +1,11 @@
+[lib]
+name = "app_lib"
+crate-type = [
+  "staticlib",
+  "cdylib",
+  "rlib"
+]
+
 [package]
 name = "switch-hosts-r"
 version = "0.0.1"
@@ -8,18 +16,17 @@ repository = "https://github.com/JS-mark/switchHostsR"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [build-dependencies]
-tauri-build = { version = "1.5.1", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 serde_json = "1.0.115"
 serde = { version = "1.0.197", features = [ "derive" ] }
-tauri = { version = "1.6.1", features = [ "macos-private-api",
-  "api-all",
-  "system-tray",
-  "icon-png",
-  "icon-ico"
+tauri = { version = "2", features = [
+  "macos-private-api",
+  "image-ico",
+  "image-png",
+  "tray-icon",
 ] }
 chrono = { version = "0.4.37", features = [ "serde" ] }
 diesel = { version = "2.1.5", features = [
@@ -33,6 +40,14 @@ bcrypt = "0.15.1"
 sysinfo = "0.30.8"
 window-shadows = "0.2.2" # windows 阴影和圆角
 window-vibrancy = "0.4.3" # windows 磨砂背景 tauri-v1.x版本最好使用0.4.3版本
+tauri-plugin-os = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2.0.1"
+tauri-plugin-notification = "2"
+tauri-plugin-process = "2"
+tauri-plugin-http = "2"
+tauri-plugin-shell = "2"
 
 [features]
 # by default Tauri runs in production mode
@@ -41,3 +56,6 @@ default = [ "custom-protocol" ]
 # this feature is used used for production builds where `devPath` points to the filesystem
 # DO NOT remove this
 custom-protocol = [ "tauri/custom-protocol" ]
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
+tauri-plugin-global-shortcut = "2"

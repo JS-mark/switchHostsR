@@ -1,4 +1,5 @@
 import { useBridgeFunc } from '@/utils'
+
 import type { GetPage } from './public'
 
 /**
@@ -9,7 +10,7 @@ export function getAllLogs(options: GetPage) {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.invoke('get_all_logs', options)
+    bridge.core.invoke('get_all_logs', options)
       .then(res => resolve(res as any))
       .catch(err => reject(err))
   })
@@ -26,7 +27,7 @@ export function insertLog(logType: number, data: Record<string, any>) {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.invoke('add_log', {
+    bridge.core.invoke('add_log', {
       logOptions: {
         // logType: 2, // 0: 更新，1 删除，2 增加，-1 未知
         content,

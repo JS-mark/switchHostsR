@@ -1,5 +1,6 @@
 pub mod app_state;
 pub mod command;
+pub mod hosts_command;
 pub mod public_type;
 pub mod system_info;
 pub mod tray;

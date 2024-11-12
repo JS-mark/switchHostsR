@@ -7,14 +7,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AddHosts: typeof import('./src/components/add-hosts/index.vue')['default']
+    AddHosts: typeof import('./src/components/add-hosts/add-hosts.vue')['default']
     Advanced: typeof import('./src/components/settings/views/advanced.vue')['default']
     AdvancedCell: typeof import('./src/components/settings/views/components/advanced-cell.vue')['default']
     Cell: typeof import('./src/components/settings/views/components/cell.vue')['default']
     Cmd: typeof import('./src/components/settings/views/cmd.vue')['default']
     Editor: typeof import('./src/components/editor/editor.vue')['default']
     General: typeof import('./src/components/settings/views/general.vue')['default']
-    GlobalModel: typeof import('./src/components/global-model/index.vue')['default']
+    GlobalModel: typeof import('./src/components/global-model/global-model.vue')['default']
     LHeader: typeof import('./src/components/layout/l-header.vue')['default']
     LSider: typeof import('./src/components/layout/l-sider.vue')['default']
     NAvatar: typeof import('naive-ui')['NAvatar']
@@ -67,6 +67,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Settings: typeof import('./src/components/settings/index.vue')['default']
-    Svg: typeof import('./src/components/svg.vue')['default']
+    Svg: typeof import('./src/components/svg-icon/svg.vue')['default']
   }
 }

@@ -1,14 +1,15 @@
 <script lang="ts">
-import { useMessage } from 'naive-ui'
+import type { FormInst, FormItemRule } from 'naive-ui'
+
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { mixins } from './mixins'
+import { useMessage } from 'naive-ui'
+import { useRouter } from 'vue-router'
 import { loginPlatform } from '@/apis'
 import { type UserMode, useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
 
-import type { FormInst, FormItemRule } from 'naive-ui'
+import { mixins } from './mixins'
 
 export default defineComponent({
   name: 'Login',
@@ -93,7 +94,7 @@ export default defineComponent({
           trigger: ['blur', 'input'],
           message: t('请输入正确邮箱'),
           validator: (rule: FormItemRule, value: string) => {
-            return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
+            return /^[\w.%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)
           },
         },
         password: {

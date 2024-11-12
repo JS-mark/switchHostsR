@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { onBeforeMount, reactive } from 'vue'
+import { sendLog } from '@/utils'
+import { debounce } from 'lodash-es'
 import { useMessage } from 'naive-ui'
-import { type Hosts, getAllHosts, updateHostsData } from '@/apis'
-import { debounce } from 'lodash-es';
-import { sendLog } from '@/utils';
+import { onBeforeMount, reactive } from 'vue'
+import { getAllHosts, type Hosts, updateHostsData } from '@/apis'
 
 defineOptions({
   name: 'HostsList',
@@ -22,7 +22,7 @@ const data = reactive({
   },
 })
 
-const getData = () => {
+function getData() {
   data.loading = true
   // 调用接口获取数据
   getAllHosts({ page: 1, pageSize: 1000 }).then((res) => {
@@ -42,7 +42,7 @@ const getData = () => {
   })
 }
 
-const onChangeTab = (value: number) => {
+function onChangeTab(value: number) {
   data.curId = value
 }
 
@@ -89,10 +89,10 @@ onBeforeMount(() => {
               <!-- shell 编辑器 -->
               <editor
                 v-if="hosts.id === data.curId"
+                id="hosts-editor"
                 v-model="hosts.content"
                 :format="true"
                 class="editor"
-                id="hosts-editor"
                 language="hosts"
                 :options="{
                   readOnly: hosts.is_readonly,

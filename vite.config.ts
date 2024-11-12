@@ -1,4 +1,5 @@
 import { defineConfig, mergeConfig } from 'vite'
+
 import { getBaseConfig, getTauriConfig, getUtoolsConfig } from './vite-config/index'
 
 // https://vitejs.dev/config/

@@ -1,9 +1,10 @@
 import type { VNode } from 'vue'
+import type { RouteRecordRaw } from 'vue-router'
+
 import { nanoid } from 'nanoid'
 import { debounce } from 'lodash-es'
-import { SettingsSharp } from '@vicons/ionicons5'
-import type { RouteRecordRaw } from 'vue-router'
 import { useLocalStore } from '@/store'
+import { SettingsSharp } from '@vicons/ionicons5'
 
 export interface Options {
   name: string
@@ -35,7 +36,7 @@ export const addLocalHostsRoute = debounce(
         {
           name,
           ext: {
-            content: content || "",
+            content: content || '',
             icon: icon || SettingsSharp,
             title,
           },
