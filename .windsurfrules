@@ -1,0 +1,126 @@
+# SwitchHostsR 开发规范
+
+## 技术栈
+
+您在 TypeScript、 Naive-ui、 Vitest、 Element UI、 Vite、Tauri2.x、 Rust、 Vue3、 CSS、 Less和Scss 等技术领域拥有丰富的专业知识。您对这些技术的最佳实践和性能优化技术具有深刻的理解。
+
+所有的回答请一律使用中文
+
+## 代码风格和结构
+
+- 编写干净、可维护且技术上准确的 TypeScript 代码
+- 优先使用函数式和声明式编程模式；避免使用类
+- 注重迭代和模块化，遵循 DRY 原则，尽量减少代码重复
+- 优先使用命名导出以保持一致性和可读性
+- 文件结构：导出的组件、Composables、辅助函数、静态内容和类型
+
+## 命名约定
+
+- 组件名称使用 PascalCase 格式
+- 文件名使用 kebab-case 格式
+- 变量和函数使用 camelCase 格式
+- 常量使用 UPPER_SNAKE_CASE 格式
+- 类型和接口使用 PascalCase 格式
+- 布尔类型变量使用 is、has、should 等前缀
+
+## Vue 组件开发规范
+
+### Vue3 组件规范
+
+- 使用`<script setup lang="ts">`语法
+- 组件 props 和 emits 必须使用类型声明
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface Props {
+  message: string
+  count?: number
+}
+
+defineProps<Props>()
+defineEmits<{
+  (e: 'update', value: string): void
+  (e: 'submit'): void
+}>()
+
+const count = ref(0)
+</script>
+```
+
+## UI 和样式
+
+- 使用 SCSS 作为主要样式语言
+- 遵循 BEM 命名规范
+- 样式文件结构：
+
+```scss
+// 变量定义
+
+// 混入
+@mixin component-style {
+  // 样式定义
+}
+
+// 组件样式
+.#{$component-prefix} {
+  &__element {
+    // 元素样式
+  }
+
+  &--modifier {
+    // 修饰符样式
+  }
+}
+```
+
+### 颜色系统规范
+
+1. 核心原则
+
+- 主题色的层级关系（如 hover、pressed 等状态）应保持一致
+
+2. 色彩语义化
+
+- 使用语义化的命名而不是具体的色值
+- 颜色应当传达其用途而不是具体的外观
+- 避免在组件中硬编码颜色值
+
+3. 灵活配置
+
+- 主题色系可以根据项目需求选择（不限定具体色系）
+- 中性色系可以根据设计风格调整
+- 可以通过配置文件统一修改整个应用的配色方案
+
+4. 组件开发指南
+
+- 优先使用 Naive-ui 的主题变量
+- 确保所有状态（normal
+
+5. 可访问性
+
+- 确保文本和背景色的对比度符合 WCAG 标准
+- 考虑色盲用户的可访问性需求
+
+## TypeScript 使用
+
+- 全面使用 TypeScript
+- 优先使用 interface 而非 type
+- 避免使用 enum，使用 const enum 或对象映射
+- 确保类型安全，禁止使用 any
+- 必要时才使用 unknown 类型
+- 泛型命名规范：T（通用类型）、K（键类型）、V（值类型）
+
+## 语法与格式
+
+- 函数方法尽量使用箭头函数
+- 在条件语句中避免不必要的大括号；对于简单语句使用简洁语法
+- 部分代码规范参考 ./eslint.config.mjs
+
+## 目录约定
+
+- src 用于存放前端 Vue 相关的文件
+- src-tauri 用于存放tauri2.x 相关文件
+- **/tests/* 用于存放单元测试
+- docs/* 用于存放文档
