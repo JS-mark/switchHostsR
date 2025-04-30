@@ -9,7 +9,15 @@
     "active": true,
     "category": "DeveloperTool",
     "copyright": "",
-    "targets": "all",
+    "targets": [
+      "deb",
+      "rpm",
+      "appimage",
+      "msi",
+      "nsis",
+      "app",
+      "dmg"
+    ],
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -21,9 +29,12 @@
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
-      "timestampUrl": ""
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
     },
-    "longDescription": "",
+    "longDescription": "一个简单易用的 hosts 文件管理工具",
     "macOS": {
       "dmg": {
         "appPosition": {
@@ -43,15 +54,9 @@
       "hardenedRuntime": true,
       "minimumSystemVersion": "10.13"
     },
-    "android": {
-      "minSdkVersion": 24
-    },
-    "createUpdaterArtifacts": false,
-    "iOS": {
-      "minimumSystemVersion": "13.0"
-    },
+    "createUpdaterArtifacts": true,
     "resources": [],
-    "shortDescription": "",
+    "shortDescription": "SwitchHostsR 文件管理工具",
     "linux": {
       "deb": {
         "depends": []
