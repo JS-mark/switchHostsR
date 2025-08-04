@@ -5,8 +5,9 @@
 pub mod handlers;
 pub mod models;
 pub mod schema;
+pub mod services;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
 use std::sync::Arc;
@@ -45,18 +46,27 @@ pub fn create_pool() -> Result<DbPool, Box<dyn Error>> {
 pub mod tests {
     use super::*;
     use tempfile::TempDir;
+    use uuid;
 
     /// 创建测试数据库连接池
     pub fn create_test_db() -> (DbPool, TempDir) {
         let temp_dir = TempDir::new().expect("无法创建临时目录");
-        let db_path = temp_dir.path().join("test.db");
-        let db_url = format!("sqlite:{}", db_path.to_str().unwrap());
+        // 使用随机文件名避免测试间的冲突
+        let db_filename = format!("test_{}.db", uuid::Uuid::new_v4().simple());
+        let db_path = temp_dir.path().join(db_filename);
+        let db_url = db_path.to_str().unwrap().to_string();
 
         // 设置环境变量
         env::set_var("DATABASE_URL", &db_url);
 
-        // 创建连接池
-        let pool = create_pool().expect("无法创建测试数据库连接池");
+        // 创建连接池，配置适合测试的参数
+        let manager = ConnectionManager::<SqliteConnection>::new(&db_url);
+        let pool = Pool::builder()
+            .max_size(5)  // 适中的连接数
+            .connection_timeout(std::time::Duration::from_secs(5))
+            .build(manager)
+            .expect("无法创建测试数据库连接池");
+        let pool = Arc::new(pool);
 
         // 运行迁移
         use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};

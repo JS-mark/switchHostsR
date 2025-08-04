@@ -1,123 +1,301 @@
-//! 用户 API 模块
+//! 用户管理 API
 //!
-//! 提供与用户相关的前端 API 接口
+//! 处理用户相关的 Tauri 命令
 
-use crate::db::handlers::UserHandler;
-use crate::db::models::User;
-use crate::ui::app_state::AppState;
-use tauri::{State, command};
+use crate::api::{ApiResult, AppState, PageData, PageParams};
+use crate::auth::token::TokenPair;
+use crate::db::models::users::User;
+use crate::db::services::auth_service::{ChangePasswordRequest, LoginRequest, LoginResponse};
+use crate::db::services::user_service::*;
+use crate::{require_auth, safe_execute};
+use serde::Deserialize;
+use tauri::State;
+
+/// 创建用户请求
+#[derive(Debug, Deserialize)]
+pub struct CreateUserRequest {
+    pub email: String,
+    pub password: String,
+    pub username: Option<String>,
+    pub avatar: Option<String>,
+    pub role: String,
+}
+
+/// 更新用户请求
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserRequest {
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub avatar: Option<String>,
+    pub role: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+/// 搜索用户请求
+#[derive(Debug, Deserialize)]
+pub struct SearchUsersRequest {
+    pub keyword: String,
+    pub role: Option<String>,
+    pub is_active: Option<bool>,
+    pub page: i32,
+    pub page_size: i32,
+}
+
+// ==================== 认证相关接口 ====================
 
 /// 用户登录
-#[command]
+#[tauri::command]
 pub async fn user_login(
     state: State<'_, AppState>,
     username: String,
     password: String,
-) -> Result<User, String> {
-    let users_db = state.users_db.lock().await;
-    users_db.login(username, password)
-        .map_err(|e| e.to_string())
+    remember_me: Option<bool>,
+) -> Result<ApiResult<LoginResponse>, ()> {
+    let auth_service = state.service_factory.auth_service();
+    let login_request = LoginRequest {
+        username,
+        password,
+        remember_me,
+    };
+
+    Ok(safe_execute!(auth_service.login(login_request)))
 }
 
 /// 用户登出
-#[command]
-pub async fn logout(
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    // 重置当前用户ID
-    let mut current_user_id = state.current_user_id.lock().await;
-    *current_user_id = 0;
+#[tauri::command]
+pub async fn logout(state: State<'_, AppState>) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let auth_service = state.service_factory.auth_service();
 
-    // 重新初始化数据库处理器
-    let pool = state.db_pool.clone();
-
-    let mut users_db = state.users_db.lock().await;
-    *users_db = UserHandler::new(pool.clone(), 0)
-        .map_err(|e| e.to_string())?;
-
-    let mut hosts_db = state.hosts_db.lock().await;
-    *hosts_db = crate::db::handlers::HostHandler::new(pool.clone(), 0)
-        .map_err(|e| e.to_string())?;
-
-    let mut host_groups_db = state.host_groups_db.lock().await;
-    *host_groups_db = crate::db::handlers::HostGroupHandler::new(pool.clone(), 0)
-        .map_err(|e| e.to_string())?;
-
-    let mut logs_db = state.logs_db.lock().await;
-    *logs_db = crate::db::handlers::LogHandler::new(pool.clone(), 0)
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    Ok(safe_execute!(auth_service.logout(&auth)))
 }
 
-/// 获取当前用户
-#[command]
-pub async fn get_current_user(
+/// 刷新令牌
+#[tauri::command]
+pub async fn refresh_token(
     state: State<'_, AppState>,
-) -> Result<User, String> {
-    let current_user_id = *state.current_user_id.lock().await;
-    if current_user_id == 0 {
-        return Err("未登录".to_string());
-    }
+    refresh_token: String,
+) -> Result<ApiResult<TokenPair>, ()> {
+    let auth_service = state.service_factory.auth_service();
 
-    let users_db = state.users_db.lock().await;
-    users_db.get_user_by_id(current_user_id)
-        .map_err(|e| e.to_string())
-}
-
-/// 获取所有用户（仅管理员）
-#[command]
-pub async fn get_all_users(
-    state: State<'_, AppState>,
-) -> Result<Vec<User>, String> {
-    let users_db = state.users_db.lock().await;
-    users_db.get_all_users()
-        .map_err(|e| e.to_string())
-}
-
-/// 创建用户（仅管理员）
-#[command]
-pub async fn create_user(
-    state: State<'_, AppState>,
-    user: User,
-) -> Result<User, String> {
-    let users_db = state.users_db.lock().await;
-    users_db.create_user(user)
-        .map_err(|e| e.to_string())
-}
-
-/// 更新用户信息
-#[command]
-pub async fn update_user(
-    state: State<'_, AppState>,
-    user_id: i32,
-    user: User,
-) -> Result<User, String> {
-    let users_db = state.users_db.lock().await;
-    users_db.update_user(user_id, user)
-        .map_err(|e| e.to_string())
-}
-
-/// 删除用户（仅管理员）
-#[command]
-pub async fn delete_user(
-    state: State<'_, AppState>,
-    user_id: i32,
-) -> Result<(), String> {
-    let users_db = state.users_db.lock().await;
-    users_db.delete_user(user_id)
-        .map_err(|e| e.to_string())
+    Ok(safe_execute!(auth_service.refresh_token(&refresh_token)))
 }
 
 /// 修改密码
-#[command]
+#[tauri::command]
 pub async fn change_password(
     state: State<'_, AppState>,
-    user_id: i32,
     old_password: String,
     new_password: String,
-) -> Result<(), String> {
-    let users_db = state.users_db.lock().await;
-    users_db.change_password(user_id, old_password, new_password)
-        .map_err(|e| e.to_string())
+) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let auth_service = state.service_factory.auth_service();
+    let change_request = ChangePasswordRequest {
+        old_password,
+        new_password,
+    };
+
+    Ok(safe_execute!(
+        auth_service.change_password(&auth, change_request)
+    ))
+}
+
+/// 验证令牌
+#[tauri::command]
+pub async fn verify_token(
+    state: State<'_, AppState>,
+    token: String,
+) -> Result<ApiResult<crate::auth::AuthContext>, ()> {
+    let auth_service = state.service_factory.auth_service();
+
+    Ok(safe_execute!(auth_service.verify_token(&token)))
+}
+
+/// 获取当前用户信息
+#[tauri::command]
+pub async fn get_current_user_info(state: State<'_, AppState>) -> Result<ApiResult<User>, ()> {
+    let auth = require_auth!();
+    let auth_service = state.service_factory.auth_service();
+
+    Ok(safe_execute!(auth_service.get_user_info(&auth)))
+}
+
+/// 检查用户名可用性
+#[tauri::command]
+pub async fn check_username_availability(
+    state: State<'_, AppState>,
+    username: String,
+) -> Result<ApiResult<bool>, ()> {
+    let auth_service = state.service_factory.auth_service();
+
+    Ok(safe_execute!(
+        auth_service.check_username_availability(&username)
+    ))
+}
+
+/// 检查邮箱可用性
+#[tauri::command]
+pub async fn check_email_availability(
+    state: State<'_, AppState>,
+    email: String,
+) -> Result<ApiResult<bool>, ()> {
+    let auth_service = state.service_factory.auth_service();
+
+    Ok(safe_execute!(auth_service.check_email_availability(&email)))
+}
+
+// ==================== 用户管理接口 ====================
+
+/// 获取所有用户
+#[tauri::command]
+pub async fn get_users(state: State<'_, AppState>) -> Result<ApiResult<Vec<User>>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    Ok(safe_execute!(user_service.get_all_users(&auth)))
+}
+
+/// 分页获取用户列表
+#[tauri::command]
+pub async fn get_users_page(
+    state: State<'_, AppState>,
+    page: i32,
+    page_size: i32,
+) -> Result<ApiResult<PageData<User>>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+    let _page_params = PageParams::new(Some(page), Some(page_size));
+
+    let query_params = crate::db::services::user_service::UserQueryParams {
+        page: Some(page),
+        page_size: Some(page_size),
+        search: None,
+        role_filter: None,
+    };
+    match user_service.get_users(&auth, query_params) {
+        Ok(response) => {
+            let page_data = PageData {
+                list: response.users,
+                total: response.total,
+            };
+            Ok(ApiResult::success(page_data))
+        }
+        Err(e) => Ok(ApiResult::from(e)),
+    }
+}
+
+/// 根据ID获取用户
+#[tauri::command]
+pub async fn get_user(state: State<'_, AppState>, user_id: i32) -> Result<ApiResult<User>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    Ok(safe_execute!(user_service.get_user_by_id(&auth, user_id)))
+}
+
+/// 创建用户
+#[tauri::command]
+pub async fn create_user(
+    state: State<'_, AppState>,
+    request: CreateUserRequest,
+) -> Result<ApiResult<User>, ()> {
+    let auth_service = state.service_factory.auth_service();
+    let register_req = crate::db::services::auth_service::RegisterRequest {
+        email: request.email,
+        password: request.password,
+        username: request.username,
+        avatar: request.avatar,
+    };
+
+    Ok(safe_execute!(auth_service.register(register_req)))
+}
+
+/// 更新用户
+#[tauri::command]
+pub async fn update_user(
+    state: State<'_, AppState>,
+    user_id: i32,
+    request: UpdateUserRequest,
+) -> Result<ApiResult<User>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    Ok(safe_execute!(
+        user_service.update_user(&auth, user_id, request)
+    ))
+}
+
+/// 删除用户
+#[tauri::command]
+pub async fn delete_user(state: State<'_, AppState>, user_id: i32) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    Ok(safe_execute!(user_service.delete_user(&auth, user_id)))
+}
+
+/// 获取用户统计信息
+#[tauri::command]
+pub async fn get_user_stats(state: State<'_, AppState>) -> Result<ApiResult<UserStats>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    Ok(safe_execute!(user_service.get_user_stats(&auth)))
+}
+
+/// 搜索用户
+#[tauri::command]
+pub async fn search_users(
+    state: State<'_, AppState>,
+    request: SearchUsersRequest,
+) -> Result<ApiResult<PageData<User>>, ()> {
+    let auth = require_auth!();
+    let user_service = state.service_factory.user_service();
+
+    let query_params = crate::db::services::user_service::UserQueryParams {
+        page: Some(request.page),
+        page_size: Some(request.page_size),
+        search: if request.keyword.is_empty() {
+            None
+        } else {
+            Some(request.keyword)
+        },
+        role_filter: request.role,
+    };
+
+    match user_service.get_users(&auth, query_params) {
+        Ok(response) => {
+            let page_data = PageData {
+                list: response.users,
+                total: response.total,
+            };
+            Ok(ApiResult::success(page_data))
+        }
+        Err(e) => Ok(ApiResult::from(e)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::services::ServiceFactory;
+    use crate::db::tests::create_test_db;
+    use tauri::Manager;
+
+    fn create_test_app_state() -> AppState {
+        let (pool, _temp_dir) = create_test_db();
+        let service_factory = ServiceFactory::new(pool);
+        AppState::new(service_factory)
+    }
+
+    #[tokio::test]
+    async fn test_get_users() {
+        let app_state = create_test_app_state();
+        let app = tauri::test::mock_app();
+        app.manage(app_state);
+
+        // 这里需要模拟认证上下文
+        // let result = get_users(app.state()).await;
+        // assert!(result.is_ok());
+    }
 }

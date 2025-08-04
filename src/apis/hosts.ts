@@ -17,7 +17,7 @@ export interface Hosts {
   last_refresh_time: string // 最后刷新时间
 }
 
-export type HostsData = Omit<Hosts, 'id' | 'is_del' | 'created_at' | 'updated_at' | 'hosts_refresh_time' | 'last_refresh_time' | 'status' | 'is_readonly'>
+export type HostsData = Omit<Hosts, 'id' | 'is_del' | 'created_at' | 'updated_at' | 'hosts_refresh_time' | 'last_refresh_time' | 'is_readonly'>
 
 export function getAllHosts(options: GetPage) {
   return useBridgeFunc<ListResult<Hosts>>(() => {

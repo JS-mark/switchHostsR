@@ -34,15 +34,20 @@ export const getUser = {
 /**
  * 用户登录
  * @param options
- * @param options.email
- * @param options.password
+ * @param options.username 用户名
+ * @param options.password 密码
+ * @param options.remember_me 记住我
  * @returns Promise
  */
-export function loginPlatform(options: { email: string, password: string }) {
+export function loginPlatform(options: { username: string, password: string, remember_me?: boolean }) {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('user_login', options)
+    bridge.core.invoke('user_login', {
+      username: options.username,
+      password: options.password,
+      remember_me: options.remember_me
+    })
       .then(res => resolve(res))
       .catch(err => reject(err))
   })
@@ -56,7 +61,109 @@ export function logoutPlatform() {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('logout', {})
+    bridge.core.invoke('logout')
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 刷新令牌
+ * @param refreshToken 刷新令牌
+ * @returns Promise
+ */
+export function refreshToken(refreshToken: string) {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('refresh_token', {
+      refresh_token: refreshToken
+    })
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 修改密码
+ * @param options
+ * @param options.old_password 旧密码
+ * @param options.new_password 新密码
+ * @returns Promise
+ */
+export function changePassword(options: { old_password: string, new_password: string }) {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('change_password', {
+      old_password: options.old_password,
+      new_password: options.new_password
+    })
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 验证令牌
+ * @param token 访问令牌
+ * @returns Promise
+ */
+export function verifyToken(token: string) {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('verify_token', {
+      token
+    })
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 获取当前用户信息
+ * @returns Promise
+ */
+export function getCurrentUserInfo() {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('get_current_user_info')
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 检查用户名可用性
+ * @param username 用户名
+ * @returns Promise
+ */
+export function checkUsernameAvailability(username: string) {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('check_username_availability', {
+      username
+    })
+      .then(res => resolve(res))
+      .catch(err => reject(err))
+  })
+}
+
+/**
+ * 检查邮箱可用性
+ * @param email 邮箱
+ * @returns Promise
+ */
+export function checkEmailAvailability(email: string) {
+  return useBridgeFunc(() => {
+    // NOTE: 待实现
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('check_email_availability', {
+      email
+    })
       .then(res => resolve(res))
       .catch(err => reject(err))
   })
@@ -78,20 +185,29 @@ export function getAllUsers(options: GetPage) {
 /**
  * 创建用户
  * @param options
- * @param options.name
+ * @param options.username
  * @param options.email
  * @param options.password
+ * @param options.avatar
+ * @param options.role
  * @returns Promise
  */
 export function addUser(options: {
-  name: string
   email: string
   password: string
+  username?: string
+  avatar?: string
+  role?: string
 }) {
   return useBridgeFunc(() => {
-    // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('add_user', options)
+    bridge.core.invoke('create_user', {
+      request: {
+        ...options,
+        avatar: options.avatar || "https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg",
+        role: options.role || 'user'
+      }
+    })
       .then(res => resolve(res))
       .catch(err => reject(err))
   })
@@ -123,7 +239,11 @@ export function thirdAccountLogin(options: {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('third_account_login', options)
+    bridge.core.invoke('third_account_login', {
+      request: {
+        ...options
+      }
+    })
       .then(res => resolve(res))
       .catch(err => reject(err))
   })

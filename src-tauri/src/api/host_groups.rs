@@ -1,98 +1,270 @@
-//! 主机组 API 模块
+//! 主机组管理 API
 //!
-//! 提供与主机组相关的前端 API 接口
+//! 处理主机组相关的 Tauri 命令
 
-use crate::db::models::{HostGroup, HostGroupRelation};
-use crate::ui::app_state::AppState;
-use tauri::{command, State};
+use crate::api::{ApiResult, AppState, PageData};
+use crate::db::models::HostGroup;
+use crate::db::services::host_group_service::*;
+use crate::{require_auth, safe_execute};
+use serde::Deserialize;
+use tauri::State;
+
+/// 主机组信息类型别名
+pub type HostGroupInfo = crate::db::services::host_group_service::HostGroupWithStats;
+
+/// 创建主机组请求
+#[derive(Debug, Deserialize)]
+pub struct CreateHostGroupRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+/// 更新主机组请求
+#[derive(Debug, Deserialize)]
+pub struct UpdateHostGroupRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+/// 搜索主机组请求
+#[derive(Debug, Deserialize)]
+pub struct SearchHostGroupsRequest {
+    pub keyword: String,
+    pub is_active: Option<bool>,
+    pub page: i32,
+    pub page_size: i32,
+}
+
+/// 获取所有主机组
+#[tauri::command]
+pub async fn get_host_groups(
+    state: State<'_, AppState>,
+) -> Result<ApiResult<Vec<HostGroupInfo>>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+    
+    let params = crate::db::services::host_group_service::HostGroupQueryParams {
+        page: None,
+        page_size: None,
+        search: None,
+        keyword: None,
+        active_only: None,
+        user_id: None,
+    };
+
+    match host_group_service.get_host_groups(&auth, params) {
+        Ok(response) => Ok(ApiResult::success(response.host_groups)),
+        Err(e) => Ok(ApiResult::internal_error(e.to_string())),
+    }
+}
+
+/// 分页获取主机组列表
+#[tauri::command]
+pub async fn get_host_groups_page(
+    state: State<'_, AppState>,
+    page: i32,
+    page_size: i32,
+) -> Result<ApiResult<PageData<HostGroupInfo>>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+    
+    let query_params = crate::db::services::host_group_service::HostGroupQueryParams {
+        page: Some(page),
+        page_size: Some(page_size),
+        search: None,
+        keyword: None,
+        active_only: None,
+        user_id: None,
+    };
+
+    match host_group_service.get_host_groups(&auth, query_params) {
+        Ok(response) => {
+            let page_data = PageData {
+                list: response.host_groups,
+                total: response.total,
+            };
+            Ok(ApiResult::success(page_data))
+        }
+        Err(e) => Ok(ApiResult::from(e)),
+    }
+}
+
+/// 根据ID获取主机组
+#[tauri::command]
+pub async fn get_host_group(
+    state: State<'_, AppState>,
+    group_id: i32,
+) -> Result<ApiResult<HostGroupDetailResponse>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(
+        host_group_service.get_host_group_by_id(&auth, group_id)
+    ))
+}
 
 /// 创建主机组
-#[command]
-pub fn create_host_group(state: State<AppState>, group: HostGroup) -> Result<HostGroup, String> {
-    // 直接使用 state 的方法获取数据库处理器
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .create_group(group)
-        .map_err(|e| e.to_string())
-}
+#[tauri::command]
+pub async fn create_host_group(
+    state: State<'_, AppState>,
+    request: CreateHostGroupRequest,
+) -> Result<ApiResult<HostGroup>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
 
-/// 获取用户的所有主机组
-#[command]
-pub fn get_user_host_groups(
-    state: State<AppState>,
-    user_id: i32,
-) -> Result<Vec<HostGroup>, String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .get_groups_by_user(user_id)
-        .map_err(|e| e.to_string())
-}
+    let create_req = crate::db::services::host_group_service::CreateHostGroupRequest {
+        name: request.name,
+        description: request.description,
+    };
 
-/// 获取主机组详情
-#[command]
-pub fn get_host_group(state: State<AppState>, group_id: i32) -> Result<HostGroup, String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .get_group_by_id(group_id)
-        .map_err(|e| e.to_string())
+    Ok(safe_execute!(
+        host_group_service.create_host_group(&auth, create_req)
+    ))
 }
 
 /// 更新主机组
-#[command]
-pub fn update_host_group(
-    state: State<AppState>,
+#[tauri::command]
+pub async fn update_host_group(
+    state: State<'_, AppState>,
     group_id: i32,
-    group: HostGroup,
-) -> Result<HostGroup, String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .update_group(group_id, group)
-        .map_err(|e| e.to_string())
+    request: UpdateHostGroupRequest,
+) -> Result<ApiResult<HostGroup>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    let update_req = crate::db::services::host_group_service::UpdateHostGroupRequest {
+        name: request.name,
+        description: request.description,
+        is_active: request.is_active,
+    };
+
+    Ok(safe_execute!(
+        host_group_service.update_host_group(&auth, group_id, update_req)
+    ))
 }
 
 /// 删除主机组
-#[command]
-pub fn delete_host_group(state: State<AppState>, group_id: i32) -> Result<(), String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .delete_group(group_id)
-        .map_err(|e| e.to_string())
+#[tauri::command]
+pub async fn delete_host_group(
+    state: State<'_, AppState>,
+    group_id: i32,
+) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(
+        host_group_service.delete_host_group(&auth, group_id)
+    ))
 }
 
-/// 向主机组添加主机
-#[command]
-pub fn add_host_to_group(
-    state: State<AppState>,
+/// 添加主机到组
+#[tauri::command]
+pub async fn add_host_to_group(
+    state: State<'_, AppState>,
     group_id: i32,
     host_id: i32,
-) -> Result<HostGroupRelation, String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .add_host_to_group(group_id, host_id)
-        .map_err(|e| e.to_string())
+) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(
+        host_group_service.add_host_to_group(&auth, group_id, host_id)
+    ))
 }
 
-/// 从主机组移除主机
-#[command]
-pub fn remove_host_from_group(
-    state: State<AppState>,
+/// 从组中移除主机
+#[tauri::command]
+pub async fn remove_host_from_group(
+    state: State<'_, AppState>,
     group_id: i32,
     host_id: i32,
-) -> Result<(), String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .remove_host_from_group(group_id, host_id)
-        .map_err(|e| e.to_string())
+) -> Result<ApiResult<()>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(
+        host_group_service.remove_host_from_group(&auth, group_id, host_id)
+    ))
 }
 
-/// 获取主机组中的所有主机
-#[command]
-pub fn get_hosts_in_group(
-    state: State<AppState>,
+/// 切换组激活状态
+#[tauri::command]
+pub async fn toggle_group_active(
+    state: State<'_, AppState>,
     group_id: i32,
-) -> Result<Vec<crate::db::models::Host>, String> {
-    let host_groups_db = state.get_host_groups_db();
-    host_groups_db
-        .get_hosts_in_group(group_id)
-        .map_err(|e| e.to_string())
+) -> Result<ApiResult<HostGroup>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(
+        host_group_service.toggle_host_group_active(&auth, group_id)
+    ))
+}
+
+/// 获取组统计信息
+#[tauri::command]
+pub async fn get_group_stats(
+    state: State<'_, AppState>,
+) -> Result<ApiResult<HostGroupStats>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+
+    Ok(safe_execute!(host_group_service.get_host_group_stats(&auth)))
+}
+
+/// 搜索主机组
+#[tauri::command]
+pub async fn search_host_groups(
+    state: State<'_, AppState>,
+    request: SearchHostGroupsRequest,
+) -> Result<ApiResult<PageData<HostGroupInfo>>, ()> {
+    let auth = require_auth!();
+    let host_group_service = state.service_factory.host_group_service();
+    
+    let query_params = crate::db::services::host_group_service::HostGroupQueryParams {
+        page: Some(request.page),
+        page_size: Some(request.page_size),
+        search: if request.keyword.is_empty() { None } else { Some(request.keyword) },
+        keyword: None,
+        active_only: request.is_active,
+        user_id: None,
+    };
+
+    match host_group_service.get_host_groups(&auth, query_params) {
+        Ok(response) => {
+            let page_data = PageData {
+                list: response.host_groups,
+                total: response.total,
+            };
+            Ok(ApiResult::success(page_data))
+        }
+        Err(e) => Ok(ApiResult::from(e)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::services::ServiceFactory;
+    use crate::db::tests::create_test_db;
+    use tauri::Manager;
+
+    fn create_test_app_state() -> AppState {
+        let (pool, _temp_dir) = create_test_db();
+        let service_factory = ServiceFactory::new(pool);
+        AppState::new(service_factory)
+    }
+
+    #[tokio::test]
+    async fn test_get_host_groups() {
+        let app_state = create_test_app_state();
+        let app = tauri::test::mock_app();
+        app.manage(app_state);
+
+        // 这里需要模拟认证上下文
+        // let result = get_host_groups(app.state()).await;
+        // assert!(result.is_ok());
+    }
 }

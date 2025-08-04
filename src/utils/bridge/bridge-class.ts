@@ -2,7 +2,7 @@ import { EventEmitter } from '@/utils/event'
 
 import type { tauriAPI } from './tauri'
 
-import tauriBridge from './tauri'
+import { initTauri } from './tauri'
 import { initUTool } from './utools'
 
 // 状态
@@ -31,7 +31,7 @@ export class Bridge extends EventEmitter {
   constructor(env: SYSTEM_ENV) {
     super()
     this._env = env
-    this.once(STATUS.READY, this.readyBridge.bind(this, this._bridge))
+    this.once(STATUS.READY, this.readyBridge.bind(this))
     this.createBridge()
   }
 
@@ -51,7 +51,7 @@ export class Bridge extends EventEmitter {
    * created
    */
   createBridge() {
-    (this._env === SYSTEM_ENV.TAURI ? tauriBridge() : initUTool())
+    (this._env === SYSTEM_ENV.TAURI ? initTauri() : initUTool())
       .then((ins) => {
         this._status = STATUS.READY
         this.emit(STATUS.READY, ins)

@@ -69,19 +69,6 @@
   "identifier": "com.mark.switchhostsR",
   "plugins": {},
   "app": {
-    "windows": [
-      {
-        "width": 800,
-        "height": 600,
-        "title": "switch-hosts-r",
-        "fullscreen": false,
-        "resizable": true,
-        "center": true,
-        "skipTaskbar": false,
-        "decorations": false,
-        "transparent": true
-      }
-    ],
     "withGlobalTauri": true,
     "macOSPrivateApi": true,
     "security": {

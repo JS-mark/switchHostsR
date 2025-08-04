@@ -11,6 +11,7 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     email TEXT,
     avatar TEXT,
+    is_admin INTEGER,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );

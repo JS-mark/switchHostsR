@@ -1,18 +1,64 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod api;
+pub mod auth;
 pub mod db;
 pub mod ui;
 pub mod utils;
 
-use api::commands::{debug_user, edit_user, get_system_info, read_text_file, write_text_file};
-use api::hosts::{get_all_hosts_data, update_host};
-use api::logs::add_log;
-use api::users::{get_all_users, logout, user_login};
+// 移除过时的命令导入，现在使用模块化的 API
+use crate::api::AppState;
+use crate::db::services::{get_service_factory, init_service_factory};
 use log::{error, info};
-use tauri::WindowEvent;
-use ui::app_state::create_app_state;
-use ui::tray::{create_tray_menu, handle_tray_event};
+use std::process::Command;
+use tauri::{WebviewWindowBuilder, WindowEvent};
+
+// 检查是否有其他实例正在运行
+fn is_another_instance_running() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("pgrep")
+            .arg("-f")
+            .arg("switch-hosts-r")
+            .output();
+
+        if let Ok(output) = output {
+            let processes = String::from_utf8_lossy(&output.stdout);
+            let process_count = processes.lines().count();
+            // 如果有超过1个进程（当前进程），说明有其他实例在运行
+            return process_count > 1;
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("tasklist")
+            .arg("/FI")
+            .arg("IMAGENAME eq switch-hosts-r.exe")
+            .output();
+
+        if let Ok(output) = output {
+            let processes = String::from_utf8_lossy(&output.stdout);
+            return processes.contains("switch-hosts-r.exe");
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let output = Command::new("pgrep")
+            .arg("-f")
+            .arg("switch-hosts-r")
+            .output();
+
+        if let Ok(output) = output {
+            let processes = String::from_utf8_lossy(&output.stdout);
+            let process_count = processes.lines().count();
+            return process_count > 1;
+        }
+    }
+
+    false
+}
 
 pub type SetupHook =
     Box<dyn FnOnce(&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> + Send>;
@@ -22,13 +68,30 @@ pub fn run() {
     // 初始化日志系统
     env_logger::init();
 
-    let mut app = tauri::Builder::default()
-        .setup(|app| {
-            ui::window::set_window_attribute(app);
+    // 单实例控制 - 检查是否已有实例运行
+    if is_another_instance_running() {
+        error!("Another instance of the application is already running");
+        std::process::exit(1);
+    }
 
+    // 初始化数据库连接池和服务工厂
+    let pool = match crate::db::create_pool() {
+        Ok(pool) => pool,
+        Err(e) => {
+            error!("Failed to create database pool: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // 初始化服务工厂
+    init_service_factory(pool);
+    info!("Database and service factory initialized successfully");
+
+    let app = tauri::Builder::default()
+        .setup(|app| {
             // 创建主窗口
             let window =
-                WindowBuilder::new(app, "home", tauri::WindowUrl::App("index.html".into()))
+                WebviewWindowBuilder::new(app, "home", tauri::WebviewUrl::App("index.html".into()))
                     .title("switch-hosts-r")
                     .inner_size(800.0, 600.0)
                     .center()
@@ -36,10 +99,14 @@ pub fn run() {
                     .transparent(true)
                     .build()?;
 
+            // 设置 window
+            // ui::window::set_window_attribute(&window);
+
             // 设置窗口事件处理
+            let window_clone = window.clone();
             window.on_window_event(move |event| match event {
                 WindowEvent::CloseRequested { .. } => {
-                    if let Err(e) = window.hide() {
+                    if let Err(e) = window_clone.hide() {
                         error!("Failed to hide window: {}", e);
                     }
                 }
@@ -47,51 +114,85 @@ pub fn run() {
             });
 
             info!("Main window created successfully");
+
+            // 创建系统托盘
+            ui::tray::create_tray(app.handle())?;
+
             Ok(())
         })
-        // 设置系统托盘
-        .system_tray(tauri::SystemTray::new().with_menu(create_tray_menu()))
-        .on_system_tray_event(handle_tray_event)
         // 在 invoke_handler 部分添加新的命令
         .invoke_handler(tauri::generate_handler![
-            // 日志相关命令
-            add_log,
-            api::logs::get_all_logs,
-            api::logs::get_user_logs,
-            api::logs::clean_old_logs,
-            // 用户相关命令
-            debug_user,
-            edit_user,
-            user_login,
-            logout,
-            get_all_users,
-            api::users::get_current_user,
+            // 系统相关
+            api::system::get_system_config,
+            api::system::update_system_config,
+            api::system::health_check,
+            api::system::clean_logs,
+            api::system::create_backup,
+            api::system::get_backups,
+            api::system::restore_backup,
+            api::system::restart_service,
+            // 文件操作和通用命令
+            api::commands::get_system_info,
+            api::commands::read_text_file,
+            api::commands::write_text_file,
+            api::commands::file_exists,
+            api::commands::create_directory,
+            api::commands::delete_file,
+            api::commands::get_file_info,
+            api::commands::list_directory,
+            // 认证相关
+            api::users::user_login,
+            api::users::logout,
+            api::users::refresh_token,
+            api::users::change_password,
+            api::users::verify_token,
+            api::users::get_current_user_info,
+            api::users::check_username_availability,
+            api::users::check_email_availability,
+            // 用户管理
+            api::users::get_users,
+            api::users::get_user,
             api::users::create_user,
             api::users::update_user,
             api::users::delete_user,
-            api::users::change_password,
-            // 主机相关命令
-            get_all_hosts_data,
-            update_host,
-            api::hosts::create_host,
+            api::users::get_user_stats,
+            api::users::search_users,
+            // 主机管理
+            api::hosts::get_hosts,
             api::hosts::get_host,
-            api::hosts::get_user_hosts,
-            api::hosts::toggle_host_active,
+            api::hosts::create_host,
+            api::hosts::update_host,
             api::hosts::delete_host,
+            api::hosts::toggle_host_active,
             api::hosts::get_active_hosts,
-            // 主机组相关命令
-            api::host_groups::create_host_group,
-            api::host_groups::get_user_host_groups,
+            api::hosts::get_host_stats,
+            api::hosts::export_hosts,
+            api::hosts::import_hosts,
+            api::hosts::search_hosts,
+            // 主机组管理
+            api::host_groups::get_host_groups,
             api::host_groups::get_host_group,
+            api::host_groups::create_host_group,
             api::host_groups::update_host_group,
             api::host_groups::delete_host_group,
             api::host_groups::add_host_to_group,
             api::host_groups::remove_host_from_group,
-            api::host_groups::get_hosts_in_group,
-            // 系统相关命令
-            get_system_info,
-            read_text_file,
-            write_text_file,
+            api::host_groups::toggle_group_active,
+            api::host_groups::get_group_stats,
+            api::host_groups::search_host_groups,
+            // 日志管理
+            api::logs::get_logs,
+            api::logs::get_log,
+            api::logs::create_log,
+            api::logs::delete_log,
+            api::logs::batch_delete_logs,
+            api::logs::clean_old_logs,
+            api::logs::get_log_stats,
+            api::logs::get_user_logs,
+            api::logs::export_logs,
+            api::logs::search_logs,
+            api::logs::get_operation_types,
+            api::logs::get_target_types,
         ])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
@@ -101,21 +202,22 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
-        .manage(create_app_state());
+        .manage(AppState::new(get_service_factory().clone()));
 
-    // 运行应用
-    if let Err(e) = app.build(tauri::generate_context!()) {
-        error!("Failed to build application: {}", e);
-        std::process::exit(1);
-    }
+    // 加载配置
+    // 构建并运行应用
+    let app = match app.build(tauri::generate_context!()) {
+        Ok(app) => app,
+        Err(e) => {
+            error!("Failed to build application: {}", e);
+            std::process::exit(1);
+        }
+    };
 
-    if let Err(e) = app.run(|_app_handle, event| match event {
+    app.run(|_app_handle, event| match event {
         tauri::RunEvent::ExitRequested { api, .. } => {
             api.prevent_exit();
         }
         _ => {}
-    }) {
-        error!("Application error: {}", e);
-        std::process::exit(1);
-    }
+    })
 }

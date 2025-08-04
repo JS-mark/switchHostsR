@@ -1,0 +1,6 @@
+[build]
+# 配置测试为单线程运行，避免SQLite数据库锁定问题
+
+[test]
+# 默认使用单线程运行测试
+test-threads = 1

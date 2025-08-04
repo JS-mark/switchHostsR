@@ -2,7 +2,7 @@
 
 diesel::table! {
     host_group_relations (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         group_id -> Integer,
         host_id -> Integer,
         created_at -> Integer,
@@ -11,7 +11,7 @@ diesel::table! {
 
 diesel::table! {
     host_groups (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         user_id -> Integer,
         name -> Text,
         description -> Nullable<Text>,
@@ -22,7 +22,7 @@ diesel::table! {
 
 diesel::table! {
     hosts (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         user_id -> Integer,
         name -> Text,
         description -> Nullable<Text>,
@@ -36,7 +36,7 @@ diesel::table! {
 
 diesel::table! {
     logs (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         user_id -> Integer,
         action -> Text,
         target_type -> Text,
@@ -48,7 +48,7 @@ diesel::table! {
 
 diesel::table! {
     users (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         username -> Text,
         password -> Text,
         email -> Nullable<Text>,

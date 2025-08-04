@@ -42,11 +42,11 @@ export default defineComponent({
           if (isLogin.value)
             return
           addUser({
-            name: data.nickname,
             email: data.email,
             password: data.password,
+            username: data.nickname || undefined,
           }).then((res: any) => {
-            if (res.code !== 10000)
+            if (res.code !== 200)
               return Promise.reject(new Error('注册失败'))
 
             message.success(t('注册成功'))
@@ -86,14 +86,9 @@ export default defineComponent({
       data,
       rules: {
         nickname: {
-          required: true,
+          required: false,
           trigger: ['blur', 'input'],
           message: t('请输入用户名称'),
-        },
-        password: {
-          required: true,
-          trigger: ['blur', 'input'],
-          message: t('请输入密码'),
         },
         email: {
           required: true,
@@ -102,6 +97,11 @@ export default defineComponent({
           validator: (rule: FormItemRule, value: string) => {
             return /^[\w.%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)
           },
+        },
+        password: {
+          required: true,
+          trigger: ['blur', 'input'],
+          message: t('请输入密码'),
         },
       },
     }

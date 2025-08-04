@@ -2,14 +2,25 @@ use crate::db::schema::logs;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(table_name = logs)]
 pub struct Log {
-    pub id: Option<i32>,
+    pub id: i32,
     pub user_id: i32,
     pub action: String,
     pub target_type: String,
     pub target_id: Option<i32>,
     pub details: Option<String>,
-    pub created_at: i64,
+    pub created_at: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = logs)]
+pub struct NewLog {
+    pub user_id: i32,
+    pub action: String,
+    pub target_type: String,
+    pub target_id: Option<i32>,
+    pub details: Option<String>,
+    pub created_at: i32,
 }

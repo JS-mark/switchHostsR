@@ -1,9 +1,9 @@
 import type { ConfigEnv } from 'vite'
 
+import UnoCss from 'unocss/vite'
 import process from 'node:process'
 import { resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
-import WindiCSS from 'vite-plugin-windicss'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
@@ -34,7 +34,7 @@ export function getBaseConfig(env: ConfigEnv) {
         customDomId: '__svg__icons__dom__',
       }),
       vue(),
-      WindiCSS(),
+      UnoCss(),
       AutoImport({
         imports: [
           'vue',

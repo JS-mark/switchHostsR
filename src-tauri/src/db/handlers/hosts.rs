@@ -2,6 +2,7 @@
 //!
 //! 该模块包含所有与主机相关的数据库操作。
 
+use crate::db::models::hosts::NewHost;
 use crate::db::models::{Host, User};
 use crate::db::schema::hosts::dsl::*;
 use crate::db::schema::users::dsl as users_dsl;
@@ -89,7 +90,7 @@ impl HostHandler {
     }
 
     /// 创建主机
-    pub fn create_host(&self, new_host: Host) -> Result<Host, HostError> {
+    pub fn create_host(&self, new_host: NewHost) -> Result<Host, HostError> {
         self.check_logged_in()?;
 
         let mut conn = self
@@ -98,8 +99,7 @@ impl HostHandler {
             .map_err(|e| HostError::Other(e.to_string()))?;
         let now_time = time::now();
 
-        let host = Host {
-            id: None,
+        let new_host_record = NewHost {
             user_id: self.current_user_id, // 使用当前用户ID
             name: new_host.name,
             description: new_host.description,
@@ -111,13 +111,13 @@ impl HostHandler {
         };
 
         diesel::insert_into(hosts)
-            .values(&host)
+            .values(&new_host_record)
             .execute(&mut conn)
             .map_err(HostError::DatabaseError)?;
 
         hosts
             .order(id.desc())
-            .first(&mut conn)
+            .first::<Host>(&mut conn)
             .map_err(HostError::DatabaseError)
     }
 
@@ -132,7 +132,7 @@ impl HostHandler {
             .map_err(|e| HostError::Other(e.to_string()))?;
         hosts
             .find(host_id)
-            .first(&mut conn)
+            .first::<Host>(&mut conn)
             .map_err(|_| HostError::HostNotFound)
     }
 
@@ -162,6 +162,7 @@ impl HostHandler {
             .get()
             .map_err(|e| HostError::Other(e.to_string()))?;
         hosts
+            .select(Host::as_select())
             .filter(user_id.eq(uid))
             .load::<Host>(&mut conn)
             .map_err(HostError::DatabaseError)
@@ -190,7 +191,7 @@ impl HostHandler {
 
         hosts
             .find(host_id)
-            .first(&mut conn)
+            .first::<Host>(&mut conn)
             .map_err(HostError::DatabaseError)
     }
 
@@ -249,6 +250,7 @@ impl HostHandler {
             .get()
             .map_err(|e| HostError::Other(e.to_string()))?;
         hosts
+            .select(Host::as_select())
             .filter(is_active.eq(1))
             .filter(user_id.eq(self.current_user_id).or(is_system.eq(1)))
             .load::<Host>(&mut conn)
@@ -269,8 +271,7 @@ mod tests {
         let handler = HostHandler::new(pool.clone(), 1).unwrap();
 
         // 创建测试主机
-        let new_host = Host {
-            id: None,
+        let new_host = NewHost {
             user_id: 0, // 这个值会被忽略
             name: "测试主机".to_string(),
             description: Some("测试描述".to_string()),
@@ -289,6 +290,6 @@ mod tests {
         assert_eq!(created_host.description, Some("测试描述".to_string()));
         assert_eq!(created_host.content, "127.0.0.1 localhost");
         assert_eq!(created_host.user_id, 1); // 应该使用当前用户ID
-        assert!(created_host.id.is_some());
+        assert!(created_host.id > 0);
     }
 }

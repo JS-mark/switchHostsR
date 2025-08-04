@@ -1,6 +1,6 @@
 <script lang="ts">
 import { storeToRefs } from 'pinia'
-import { debugUser } from '@/utils'
+// import { debugUser } from '@/utils'
 import { useUserStore } from '@/store'
 import { defineComponent, reactive, ref } from 'vue'
 
@@ -10,7 +10,7 @@ import Register from './register.vue'
 import ThirdLogin from './third-login.vue'
 
 // 调试用
-debugUser()
+// debugUser()
 
 export default defineComponent({
   name: 'RegisterAndLogin',

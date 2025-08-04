@@ -2,11 +2,11 @@
 //!
 //! 该模块包含所有与用户相关的数据库操作。
 
-use crate::db::models::User;
+use crate::db::models::{users::NewUser, User};
 use crate::db::schema::users::dsl::*;
 use crate::db::DbPool;
 use crate::utils::time;
-use anyhow::{anyhow, Context, Result};
+use anyhow::Result;
 use diesel::prelude::*;
 use thiserror::Error;
 
@@ -39,6 +39,45 @@ pub struct UserHandler {
 }
 
 impl UserHandler {
+    /// 获取数据库连接池
+    pub fn get_pool(&self) -> &DbPool {
+        &self.pool
+    }
+
+    pub fn change_password(
+        &self,
+        user_id: i32,
+        old_password: String,
+        new_password: String,
+    ) -> Result<(), UserError> {
+        self.check_logged_in()?;
+        self.check_permission(user_id)?;
+
+        let mut conn = self
+            .pool
+            .get()
+            .map_err(|e| UserError::Other(e.to_string()))?;
+
+        // 获取用户信息
+        let user = users
+            .find(user_id)
+            .first::<User>(&mut conn)
+            .map_err(|_| UserError::UserNotFound)?;
+
+        // 验证旧密码
+        if user.password != old_password {
+            return Err(UserError::Other("旧密码不正确".to_string()));
+        }
+
+        // 更新密码
+        let now_time = time::now();
+        diesel::update(users.find(user_id))
+            .set((password.eq(new_password), updated_at.eq(now_time)))
+            .execute(&mut conn)
+            .map_err(UserError::DatabaseError)?;
+
+        Ok(())
+    }
     /// 创建新的用户处理器
     pub fn new(pool: DbPool, current_user_id: i32) -> Result<Self, UserError> {
         // 验证用户ID是否有效（非零值表示已登录）
@@ -93,7 +132,7 @@ impl UserHandler {
     }
 
     /// 创建用户
-    pub fn create_user(&self, new_user: User) -> Result<User, UserError> {
+    pub fn create_user(&self, new_user: NewUser) -> Result<User, UserError> {
         // 创建用户时，如果已登录，需要检查是否有管理员权限
         if self.current_user_id != 0 {
             self.check_permission(0)?; // 传入0表示需要管理员权限
@@ -105,8 +144,7 @@ impl UserHandler {
             .map_err(|e| UserError::Other(e.to_string()))?;
         let now_time = time::now();
 
-        let user = User {
-            id: None,
+        let new_user_record = NewUser {
             username: new_user.username.clone(),
             password: new_user.password,
             email: new_user.email,
@@ -118,7 +156,7 @@ impl UserHandler {
 
         // 检查用户名是否已存在
         let username_exists = users
-            .filter(username.eq(&user.username))
+            .filter(username.eq(&new_user_record.username))
             .first::<User>(&mut conn)
             .is_ok();
 
@@ -127,13 +165,13 @@ impl UserHandler {
         }
 
         diesel::insert_into(users)
-            .values(&user)
+            .values(&new_user_record)
             .execute(&mut conn)
             .map_err(UserError::DatabaseError)?;
 
         users
             .order(id.desc())
-            .first(&mut conn)
+            .first::<User>(&mut conn)
             .map_err(UserError::DatabaseError)
     }
 
@@ -148,7 +186,7 @@ impl UserHandler {
             .map_err(|e| UserError::Other(e.to_string()))?;
         users
             .find(user_id)
-            .first(&mut conn)
+            .first::<User>(&mut conn)
             .map_err(|_| UserError::UserNotFound)
     }
 
@@ -160,7 +198,7 @@ impl UserHandler {
             .map_err(|e| UserError::Other(e.to_string()))?;
         users
             .filter(username.eq(user_name))
-            .first(&mut conn)
+            .first::<User>(&mut conn)
             .map_err(|_| UserError::UserNotFound)
     }
 
@@ -198,7 +236,7 @@ impl UserHandler {
 
         users
             .find(user_id)
-            .first(&mut conn)
+            .first::<User>(&mut conn)
             .map_err(UserError::DatabaseError)
     }
 
@@ -231,6 +269,7 @@ impl UserHandler {
             .get()
             .map_err(|e| UserError::Other(e.to_string()))?;
         users
+            .select(User::as_select())
             .load::<User>(&mut conn)
             .map_err(UserError::DatabaseError)
     }
@@ -269,8 +308,7 @@ mod tests {
         let handler = UserHandler::new(pool.clone(), 0).unwrap();
 
         // 创建测试用户
-        let new_user = User {
-            id: None,
+        let new_user = NewUser {
             username: "testuser".to_string(),
             password: "password123".to_string(),
             email: Some("test@example.com".to_string()),
@@ -286,11 +324,10 @@ mod tests {
         // 验证结果
         assert_eq!(created_user.username, "testuser");
         assert_eq!(created_user.email, Some("test@example.com".to_string()));
-        assert!(created_user.id.is_some());
+        assert!(created_user.id > 0);
 
         // 测试重复用户名
-        let duplicate_user = User {
-            id: None,
+        let duplicate_user = NewUser {
             username: "testuser".to_string(),
             password: "password456".to_string(),
             email: Some("another@example.com".to_string()),

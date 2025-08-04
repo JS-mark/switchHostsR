@@ -1,9 +1,9 @@
-pub mod users;
+pub mod host_groups;
 pub mod hosts;
 pub mod logs;
-pub mod host_groups;
+pub mod users;
 
-pub use users::User;
+pub use host_groups::{HostGroup, HostGroupRelation, NewHostGroup, NewHostGroupRelation};
 pub use hosts::Host;
 pub use logs::Log;
-pub use host_groups::{HostGroup, HostGroupRelation};
+pub use users::User;

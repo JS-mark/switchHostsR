@@ -1,10 +1,10 @@
-use tauri::{Runtime, Window};
+use tauri::{Runtime, WebviewWindow};
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{NSVisualEffectMaterial, NSVisualEffectState};
 
 /// 设置窗口属性
-pub fn set_window_attribute<R: Runtime>(window: &Window<R>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn set_window_attribute<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Box<dyn std::error::Error>> {
     // 设置窗口阴影
     window.set_decorations(true)?;
     #[cfg(any(windows, target_os = "macos"))]

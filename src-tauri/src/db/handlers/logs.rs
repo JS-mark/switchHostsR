@@ -2,6 +2,7 @@
 //!
 //! 该模块包含所有与日志相关的数据库操作。
 
+use crate::db::models::logs::NewLog;
 use crate::db::models::Log;
 use crate::db::models::User;
 use crate::db::schema::logs::dsl::*;
@@ -72,7 +73,7 @@ impl LogHandler {
     }
 
     /// 添加日志
-    pub fn add_log(&self, new_log: Log) -> Result<Log, LogError> {
+    pub fn add_log(&self, new_log: NewLog) -> Result<Log, LogError> {
         // 添加日志不需要登录检查，因为系统也可能记录日志
 
         let mut conn = self
@@ -81,8 +82,7 @@ impl LogHandler {
             .map_err(|e| LogError::Other(e.to_string()))?;
         let now_time = time::now();
 
-        let log = Log {
-            id: None,
+        let new_log_record = NewLog {
             user_id: if self.current_user_id != 0 {
                 self.current_user_id
             } else {
@@ -96,12 +96,12 @@ impl LogHandler {
         };
 
         diesel::insert_into(logs)
-            .values(&log)
+            .values(&new_log_record)
             .execute(&mut conn)
             .map_err(LogError::DatabaseError)?;
 
         logs.order(id.desc())
-            .first(&mut conn)
+            .first::<Log>(&mut conn)
             .map_err(LogError::DatabaseError)
     }
 
@@ -114,8 +114,9 @@ impl LogHandler {
             .pool
             .get()
             .map_err(|e| LogError::Other(e.to_string()))?;
-        logs.order(created_at.desc())
-            .limit(limit_count)
+        logs.select(Log::as_select())
+            .order(created_at.desc())
+            .limit(limit_count.into())
             .load::<Log>(&mut conn)
             .map_err(LogError::DatabaseError)
     }
@@ -133,9 +134,10 @@ impl LogHandler {
             .pool
             .get()
             .map_err(|e| LogError::Other(e.to_string()))?;
-        logs.filter(user_id.eq(uid))
+        logs.select(Log::as_select())
+            .filter(user_id.eq(uid))
             .order(created_at.desc())
-            .limit(limit_count)
+            .limit(limit_count.into())
             .load::<Log>(&mut conn)
             .map_err(LogError::DatabaseError)
     }
@@ -153,7 +155,7 @@ impl LogHandler {
         // 获取要保留的日志ID
         let keep_ids: Vec<i32> = logs
             .order(created_at.desc())
-            .limit(keep_count)
+            .limit(keep_count.into())
             .select(id)
             .load::<i32>(&mut conn)
             .map_err(LogError::DatabaseError)?;
@@ -184,8 +186,7 @@ mod tests {
         let handler = LogHandler::new(pool.clone(), 1).unwrap();
 
         // 创建测试日志
-        let new_log = Log {
-            id: None,
+        let new_log = NewLog {
             user_id: 1,
             action: "login".to_string(),
             target_type: "user".to_string(),
@@ -201,6 +202,6 @@ mod tests {
         assert_eq!(created_log.action, "login");
         assert_eq!(created_log.target_type, "user");
         assert_eq!(created_log.details, Some("用户登录".to_string()));
-        assert!(created_log.id.is_some());
+        assert!(created_log.id > 0);
     }
 }

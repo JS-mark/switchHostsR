@@ -6,7 +6,8 @@ import { usePlugins } from './plugins'
 import './style.less'
 
 import 'vfonts/Lato.css'
-import 'virtual:windi.css'
+import 'virtual:uno.css'
+import '@unocss/reset/normalize.css'
 import 'vfonts/FiraCode.css'
 import 'virtual:svg-icons-register'
 

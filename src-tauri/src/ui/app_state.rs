@@ -1,16 +1,17 @@
-// 修改引用路径，从 handler 改为 handlers
 use crate::db::{self, handlers};
 use std::fmt;
 use std::sync::{Mutex, MutexGuard};
 use tauri::State;
 
 // 手动实现 Debug trait 而不是使用 derive
+use crate::db::handlers::{HostGroupHandler, HostHandler, LogHandler, UserHandler};
+
 pub struct AppState {
     pub user_id: Mutex<i32>,
-    pub user_db: Mutex<handlers::UserHandler>,
-    pub logs_db: Mutex<handlers::LogHandler>,
-    pub hosts_db: Mutex<handlers::HostHandler>,
-    pub host_groups_db: Mutex<handlers::HostGroupHandler>,
+    pub user_db: Mutex<UserHandler>,
+    pub logs_db: Mutex<LogHandler>,
+    pub hosts_db: Mutex<HostHandler>,
+    pub host_groups_db: Mutex<HostGroupHandler>,
 }
 
 // 手动实现 Debug trait

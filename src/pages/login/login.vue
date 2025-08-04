@@ -43,10 +43,10 @@ export default defineComponent({
             return
           // 登录平台
           loginPlatform({
-            email: data.email,
+            username: data.email,
             password: data.password,
           }).then((res: any) => {
-            if (res.code === 10000) {
+            if (res.code === 200) {
               setLogin(true)
               setMode('email')
               setUserInfo(res.data)
