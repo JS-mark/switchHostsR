@@ -22,6 +22,6 @@ dist-ssr
 *.sw?
 
 
-/docs/.vitepress/cache
+doc_build
 ./auto-imports.d.ts
 ./components.d.ts

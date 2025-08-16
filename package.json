@@ -27,9 +27,9 @@
     "remote:server": "vite-node ./src/mock/index.ts",
     "build:tauri": "vue-tsc --noEmit && vite build --mode tauri",
     "build:utool": "vue-tsc --noEmit && vite build --mode utool",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
+    "docs:dev": "rspress dev docs",
+    "docs:build": "rspress build docs",
+    "docs:preview": "rspress preview docs",
     "deploy": "gh-pages -d dist",
     "lint:eslint": "eslint \"{src,mock}/**/*.{vue,ts,tsx}\" --fix",
     "lint:stylelint": "stylelint --fix \"**/*.{vue,less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/"
@@ -104,7 +104,9 @@
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-svg-loader": "^5.1.0",
-    "vitepress": "^1.6.3",
+    "@rspress/core": "^1.45.1",
+    "@rspress/theme-default": "^1.45.1",
+    "rspress": "^1.45.1",
     "vue-tsc": "^2.2.10"
   },
   "simple-git-hooks": {
