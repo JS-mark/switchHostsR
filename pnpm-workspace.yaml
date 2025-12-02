@@ -1,3 +1,9 @@
+packages:
+  - 'packages/**'
+  - 'apps/**'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+
 onlyBuiltDependencies:
   - esbuild
   - simple-git-hooks
