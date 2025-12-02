@@ -100,7 +100,7 @@ pub fn run() {
                     .build()?;
 
             // 设置 window
-            // ui::window::set_window_attribute(&window);
+            let _ = ui::window::set_window_attribute(&window);
 
             // 设置窗口事件处理
             let window_clone = window.clone();

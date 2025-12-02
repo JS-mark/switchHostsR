@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager, Runtime};
 fn open_home<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(window) = app.get_webview_window("home") {
         if !window.is_visible()? {
-            // window.show()?;
+            window.show()?;
         }
         if window.is_minimized()? {
             window.unminimize()?;
@@ -26,7 +26,7 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::er
     let menu = Menu::with_items(app, &[&open_item, &quit_item])?;
 
     // 创建托盘图标
-    let _tray = TrayIconBuilder::with_id("main")
+    let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(move |app, event| match event.id.as_ref() {
@@ -40,23 +40,38 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::er
             }
             _ => {}
         })
-        .on_tray_icon_event(|_tray, event| match event {
+        .on_tray_icon_event(move |tray, event| match event {
             TrayIconEvent::Click {
                 button,
                 button_state,
                 ..
             } => {
+                use tauri::tray::{MouseButton, MouseButtonState};
                 println!(
                     "Tray icon clicked with {:?} button in {:?} state",
                     button, button_state
                 );
+
+                // 左键点击显示主页
+                if button == MouseButton::Left && button_state == MouseButtonState::Up {
+                    let app = tray.app_handle();
+                    if let Err(e) = open_home(app) {
+                        eprintln!("Failed to open home: {}", e);
+                    }
+                }
             }
             TrayIconEvent::DoubleClick { button, .. } => {
                 println!("Tray icon double-clicked with {:?} button", button);
             }
             _ => {}
-        })
-        .build(app)?;
+        });
+
+    // 设置图标（如果存在）
+    if let Some(icon) = app.default_window_icon() {
+        builder = builder.icon(icon.clone());
+    }
+
+    builder.build(app)?;
 
     Ok(())
 }
