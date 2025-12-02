@@ -73,6 +73,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
     "@commitlint/cli": "^20.1.0",
+    "@rspress/plugin-shiki": "^1.46.2",
     "@commitlint/config-conventional": "^20.0.0",
     "@faker-js/faker": "^10.1.0",
     "@intlify/unplugin-vue-i18n": "^11.0.1",
@@ -102,6 +103,8 @@
     "vite-node": "^5.2.0",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-html": "^3.2.2",
+    "@rspress/plugin-playground": "^1.46.2",
+    "rspress-plugin-mermaid": "^0.3.0",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-svg-loader": "^5.1.0",
     "@rspress/core": "^1.46.2",
