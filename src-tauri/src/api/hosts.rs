@@ -4,7 +4,8 @@
 
 use crate::api::{ApiResult, AppState, PageData};
 use crate::db::models::Host;
-use crate::db::services::host_service::{*, ImportResult};
+use crate::db::services::host_service::{ImportResult, *};
+use crate::utils::system_hosts::{self, ApplyHostsResult};
 use crate::{require_auth, safe_execute};
 use serde::Deserialize;
 use tauri::State;
@@ -51,9 +52,7 @@ pub struct ImportHostsRequest {
 
 /// 获取所有主机
 #[tauri::command]
-pub async fn get_hosts(
-    state: State<'_, AppState>,
-) -> Result<ApiResult<Vec<HostInfo>>, ()> {
+pub async fn get_hosts(state: State<'_, AppState>) -> Result<ApiResult<Vec<HostInfo>>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
@@ -69,7 +68,7 @@ pub async fn get_hosts_page(
 ) -> Result<ApiResult<PageData<HostInfo>>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
-    
+
     let query_params = crate::db::services::host_service::HostQueryParams {
         page: Some(page),
         page_size: Some(page_size),
@@ -92,10 +91,7 @@ pub async fn get_hosts_page(
 
 /// 根据ID获取主机
 #[tauri::command]
-pub async fn get_host(
-    state: State<'_, AppState>,
-    host_id: i32,
-) -> Result<ApiResult<HostInfo>, ()> {
+pub async fn get_host(state: State<'_, AppState>, host_id: i32) -> Result<ApiResult<HostInfo>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
@@ -138,15 +134,14 @@ pub async fn update_host(
         is_active: request.is_active,
     };
 
-    Ok(safe_execute!(host_service.update_host(&auth, host_id, update_req)))
+    Ok(safe_execute!(
+        host_service.update_host(&auth, host_id, update_req)
+    ))
 }
 
 /// 删除主机
 #[tauri::command]
-pub async fn delete_host(
-    state: State<'_, AppState>,
-    host_id: i32,
-) -> Result<ApiResult<()>, ()> {
+pub async fn delete_host(state: State<'_, AppState>, host_id: i32) -> Result<ApiResult<()>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
@@ -162,14 +157,14 @@ pub async fn toggle_host_active(
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
-    Ok(safe_execute!(host_service.toggle_host_active(&auth, host_id)))
+    Ok(safe_execute!(
+        host_service.toggle_host_active(&auth, host_id)
+    ))
 }
 
 /// 获取激活的主机
 #[tauri::command]
-pub async fn get_active_hosts(
-    state: State<'_, AppState>,
-) -> Result<ApiResult<Vec<HostInfo>>, ()> {
+pub async fn get_active_hosts(state: State<'_, AppState>) -> Result<ApiResult<Vec<HostInfo>>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
@@ -178,9 +173,7 @@ pub async fn get_active_hosts(
 
 /// 获取主机统计信息
 #[tauri::command]
-pub async fn get_host_stats(
-    state: State<'_, AppState>,
-) -> Result<ApiResult<HostStats>, ()> {
+pub async fn get_host_stats(state: State<'_, AppState>) -> Result<ApiResult<HostStats>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
 
@@ -209,21 +202,24 @@ pub async fn import_hosts(
     let host_service = state.service_factory.host_service();
 
     let import_data = crate::db::services::host_service::HostExportData {
-        hosts: request.hosts.into_iter().map(|h| {
-            crate::db::services::host_service::HostExportItem {
+        hosts: request
+            .hosts
+            .into_iter()
+            .map(|h| crate::db::services::host_service::HostExportItem {
                 name: h.name,
                 content: h.content,
                 description: h.description,
                 is_active: h.is_active.unwrap_or(true),
-            }
-        }).collect(),
+            })
+            .collect(),
         exported_at: chrono::Utc::now().timestamp() as i32,
         exported_by: auth.username.clone(),
     };
 
     let overwrite = request.overwrite.unwrap_or(false);
 
-    let imported_hosts_result = safe_execute!(host_service.import_hosts(&auth, import_data, overwrite));
+    let imported_hosts_result =
+        safe_execute!(host_service.import_hosts(&auth, import_data, overwrite));
 
     let imported_hosts = if imported_hosts_result.code == 200 {
         imported_hosts_result.data.unwrap_or_default()
@@ -234,7 +230,10 @@ pub async fn import_hosts(
             imported_hosts: vec![],
             errors: vec![imported_hosts_result.msg.clone()],
         };
-        return Ok(ApiResult::error(imported_hosts_result.code, imported_hosts_result.msg));
+        return Ok(ApiResult::error(
+            imported_hosts_result.code,
+            imported_hosts_result.msg,
+        ));
     };
 
     let result = ImportResult {
@@ -255,11 +254,15 @@ pub async fn search_hosts(
 ) -> Result<ApiResult<PageData<HostInfo>>, ()> {
     let auth = require_auth!();
     let host_service = state.service_factory.host_service();
-    
+
     let query_params = crate::db::services::host_service::HostQueryParams {
         page: Some(request.page),
         page_size: Some(request.page_size),
-        search: if request.keyword.is_empty() { None } else { Some(request.keyword) },
+        search: if request.keyword.is_empty() {
+            None
+        } else {
+            Some(request.keyword)
+        },
         active_only: request.is_active,
         user_id: None,
     };
@@ -276,11 +279,52 @@ pub async fn search_hosts(
     }
 }
 
+/// 将所有激活的 hosts 应用到系统 hosts 文件
+///
+/// 合并所有 is_active=1 的 hosts 内容，写入系统 hosts 文件，
+/// 并刷新 DNS 缓存。需要管理员/sudo 权限。
+#[tauri::command]
+pub async fn apply_hosts_to_system(
+    state: State<'_, AppState>,
+) -> Result<ApiResult<ApplyHostsResult>, ()> {
+    let auth = require_auth!();
+    let host_service = state.service_factory.host_service();
+
+    // 获取所有激活的 hosts
+    let active_hosts = match host_service.get_active_hosts(&auth) {
+        Ok(hosts_list) => hosts_list,
+        Err(e) => return Ok(ApiResult::from(e)),
+    };
+
+    // 构建 (名称, 内容) 列表
+    let hosts_entries: Vec<(String, String)> = active_hosts
+        .into_iter()
+        .map(|h| (h.name, h.content))
+        .collect();
+
+    // 写入系统 hosts 文件并刷新 DNS
+    Ok(safe_execute!(system_hosts::write_system_hosts(
+        &hosts_entries
+    )))
+}
+
+/// 读取系统 hosts 文件内容（只读，无需认证）
+#[tauri::command]
+pub async fn read_system_hosts_file(_state: State<'_, AppState>) -> Result<ApiResult<String>, ()> {
+    log::info!("[read_system_hosts_file] 命令被调用");
+    let result = system_hosts::read_system_hosts();
+    match &result {
+        Ok(content) => log::info!("[read_system_hosts_file] 读取成功，内容长度: {}", content.len()),
+        Err(e) => log::error!("[read_system_hosts_file] 读取失败: {}", e),
+    }
+    Ok(safe_execute!(result))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::tests::create_test_db;
     use crate::db::services::ServiceFactory;
+    use crate::db::tests::create_test_db;
     use tauri::Manager;
 
     fn create_test_app_state() -> AppState {
