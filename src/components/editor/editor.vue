@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import type { editor } from 'monaco-editor/esm/vs/editor/editor.api'
 
+import { onMounted, onUnmounted, reactive, watch } from 'vue'
+
 import { useSettingsStore } from '@/store'
 import { useNaiveApi } from '@/plugins/naive-api'
-import { onMounted, onUnmounted, reactive } from 'vue'
 
 import useMonaco from './monaco'
 import { useEditor } from './hook'
@@ -139,6 +140,8 @@ function init() {
     initEditorEvent()
     // 保留原始数据
     data.origin = props.modelValue
+    // 将初始内容设置到 Monaco 编辑器
+    updateMonacoVal(props.modelValue, props.format)
     switchTheme(appSettings.theme)
     loadingBar.finish()
   }, 100)
@@ -162,6 +165,14 @@ defineExpose({
   setValue,
   onFormatDoc,
   destroy,
+})
+
+// 监听外部 modelValue 变化，同步到 Monaco 编辑器
+watch(() => props.modelValue, (newVal) => {
+  // 避免编辑器自身修改触发的循环更新
+  if (newVal !== data.value) {
+    updateMonacoVal(newVal, false)
+  }
 })
 
 onMounted(() => {

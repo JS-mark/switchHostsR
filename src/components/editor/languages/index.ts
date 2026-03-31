@@ -1,1 +1,1 @@
-import './hosts/hosts'
+export { registerHostsLanguage } from './hosts/hosts'

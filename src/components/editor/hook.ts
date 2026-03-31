@@ -1,7 +1,8 @@
 import type { editor } from 'monaco-editor'
 
-import { useEmitter } from '@/utils'
 import { has, unset } from 'lodash-es'
+
+import { useEmitter } from '@/utils'
 
 const EDITOR_KEY = '__MonacoEditor'
 const emitter = useEmitter()
