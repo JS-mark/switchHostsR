@@ -5,8 +5,9 @@ defineOptions({
 import type { GlobalThemeOverrides } from 'naive-ui'
 
 import { computed, ref } from 'vue'
-import { useSettingsStore } from '@/store'
 import { darkTheme, dateZhCN, useOsTheme, zhCN } from 'naive-ui'
+
+import { useSettingsStore } from '@/store'
 
 const appSetting = useSettingsStore()
 const osTheme = useOsTheme()
@@ -35,6 +36,14 @@ const themeOverrides = ref<GlobalThemeOverrides>({
     textColorFocusPrimary: '#fff',
     textColorPressedPrimary: '#fff',
     colorHoverPrimary: 'rgba(64, 150, 255, 1)',
+    fontSizeMedium: '13px',
+    fontSizeSmall: '12px',
+    heightMedium: '30px',
+    heightSmall: '26px',
+    paddingMedium: '0 12px',
+    paddingSmall: '0 8px',
+    iconSizeMedium: '16px',
+    iconSizeSmall: '14px',
   },
 })
 </script>

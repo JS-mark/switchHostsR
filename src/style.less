@@ -4,12 +4,31 @@
   line-height: 24px;
   font-weight: 400;
   color: #0f0f0f;
-  background-color: #f6f6f6;
+  background-color: transparent;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  clip-path: inset(0 round 10px);
+}
+
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #f6f6f6;
 }
 
 /* 渐变设置 */

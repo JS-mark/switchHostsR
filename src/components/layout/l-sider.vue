@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import { bottomMenus } from '@/utils/menu'
-import { globalEventEmitter } from '@/utils'
-import { HistoryMenus } from '@/router/history'
-import { type MenuOption, NIcon } from 'naive-ui'
+import type { MenuOption } from 'naive-ui'
+
+import { NIcon } from 'naive-ui'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CaretDownOutline, SettingsSharp } from '@vicons/ionicons5'
 import { defineAsyncComponent, h, onMounted, ref, shallowRef, watchEffect } from 'vue'
+
+import { bottomMenus } from '@/utils/menu'
+import { globalEventEmitter } from '@/utils'
+import { HistoryMenus } from '@/router/history'
 import {
   menus as defaultMenus,
   defaultRoute,
@@ -132,13 +135,14 @@ watchEffect(() => {
       <n-dropdown
         placement="right"
         trigger="hover"
-        size="large"
+        size="medium"
         :options="bottomMenus($t)"
         :show-arrow="true"
         @select="onDropdownSelected"
       >
         <n-button
           strong
+          size="small"
           :quaternary="!collapsed"
           :secondary="collapsed"
           type="primary"
@@ -146,7 +150,7 @@ watchEffect(() => {
           class="btn" :class="[{ collapsed }]"
         >
           <template #icon>
-            <SvgIcon name="settings" size="16px" />
+            <SvgIcon name="settings" size="14px" />
           </template>
           <template v-if="!collapsed">
             {{ $t("更多") }}
@@ -162,9 +166,9 @@ watchEffect(() => {
   height 100%
 
   & .btn
-    margin 10px
+    margin 6px 8px
     box-sizing border-box
-    width calc(100% - 20px)
+    width calc(100% - 16px)
 
     &.collapsed
       width auto

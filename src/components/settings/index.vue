@@ -6,8 +6,9 @@ export default {
 
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { APP_NAME } from '@/utils/constant'
 import { onBeforeMount, ref, watchEffect } from 'vue'
+
+import { APP_NAME } from '@/utils/constant'
 import { useSettingsStore } from '@/store/useSettings'
 
 import Cmd from './views/cmd.vue'
@@ -57,10 +58,10 @@ watchEffect(() => {
       class="card-tabs"
       default-value="general"
       type="line"
-      size="large"
+      size="medium"
       animated
       style="margin: 0 -4px"
-      pane-style="height: 430px; padding: 0 4px; box-sizing: border-box;"
+      pane-style="height: 380px; padding: 0 4px; box-sizing: border-box;"
     >
       <!-- 通用 -->
       <n-tab-pane name="general" :tab="$t('general')">

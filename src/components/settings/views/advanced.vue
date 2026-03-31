@@ -1,7 +1,8 @@
 <script lang="ts" setup>
+import { reactive, watchEffect } from 'vue'
+
 import type { SettingSpace } from '@/store/useSettings'
 
-import { reactive, watchEffect } from 'vue'
 import { APP_NAME } from '@/utils/constant'
 import { useSettingsStore } from '@/store/useSettings'
 import { openDirectory, openFile, sendLog } from '@/utils'

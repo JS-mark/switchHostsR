@@ -8,13 +8,14 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import type { SettingSpace } from '@/store/useSettings'
-
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
+import { computed, onBeforeMount, reactive, ref } from 'vue'
+
+import type { SettingSpace } from '@/store/useSettings'
+
 import { setDefaultLang, useLanguages } from '@/langs'
 import { useSettingsStore } from '@/store/useSettings'
-import { computed, onBeforeMount, reactive, ref } from 'vue'
 
 const { t } = useI18n()
 const store = useSettingsStore()
@@ -122,11 +123,11 @@ function cancel() {
     <n-space class="user-control a-center">
       <slot name="control" />
       <!-- 取消 -->
-      <n-button strong secondary type="error" @click="cancel">
+      <n-button strong secondary size="small" type="error" @click="cancel">
         {{ $t("cancel") }}
       </n-button>
       <!-- 确认 -->
-      <n-button strong secondary type="primary" @click="confirm">
+      <n-button strong secondary size="small" type="primary" @click="confirm">
         {{ $t("confirm") }}
       </n-button>
     </n-space>

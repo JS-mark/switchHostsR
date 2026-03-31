@@ -1,15 +1,15 @@
 <template>
   <div class="flex flex-col">
-    <h4 class="my-10px">{{ title }}</h4>
+    <h4 class="my-10px">
+      {{ title }}
+    </h4>
     <slot></slot>
   </div>
 </template>
 
-
 <script lang="ts" setup>
-
 defineOptions({
-  name: 'AdvancedCell'
+  name: 'AdvancedCell',
 })
 
 const props = defineProps<{

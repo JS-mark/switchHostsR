@@ -2,8 +2,9 @@
 import { storeToRefs } from 'pinia'
 import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import { logoutPlatform } from '@/apis'
 import { defineAsyncComponent } from 'vue'
+
+import { logoutPlatform } from '@/apis'
 import { APP_NAME } from '@/utils/constant'
 import { personalMenus, rightMenus } from '@/utils/menu'
 import { useHostsStore, useSettingsStore, useUserStore } from '@/store'
@@ -83,7 +84,7 @@ function onAddHosts() {
     <header class="header row f-between a-center" data-tauri-drag-region>
       <section row>
         <n-space class="row a-center">
-          <SvgIcon name="logo-header" size="35px" />
+          <SvgIcon name="logo-header" size="26px" />
           <span class="logo-name">{{ APP_NAME }}</span>
         </n-space>
       </section>
@@ -93,9 +94,9 @@ function onAddHosts() {
           <!-- 添加 -->
           <n-tooltip v-if="isLogin" trigger="hover">
             <template #trigger>
-              <n-button strong secondary circle type="primary" @click="onAddHosts">
+              <n-button strong secondary circle type="primary" size="small" @click="onAddHosts">
                 <template #icon>
-                  <SvgIcon name="plus" size="16px" />
+                  <SvgIcon name="plus" size="14px" />
                 </template>
               </n-button>
             </template>
@@ -103,12 +104,12 @@ function onAddHosts() {
           </n-tooltip>
           <!-- 设置 -->
           <n-dropdown
-            placement="bottom-end" trigger="hover" size="large" :options="rightMenus($t)" :show-arrow="true"
+            placement="bottom-end" trigger="hover" size="medium" :options="rightMenus($t)" :show-arrow="true"
             @select="onDropdownSelected"
           >
-            <n-button strong secondary circle type="info">
+            <n-button strong secondary circle type="info" size="small">
               <template #icon>
-                <SvgIcon name="settings" size="16px" />
+                <SvgIcon name="settings" size="14px" />
               </template>
             </n-button>
           </n-dropdown>
@@ -117,7 +118,7 @@ function onAddHosts() {
         <n-divider vertical />
         <n-space class="row f-end a-center">
           <n-dropdown
-            placement="bottom-end" trigger="hover" size="large" :options="personalMenus($t)"
+            placement="bottom-end" trigger="hover" size="medium" :options="personalMenus($t)"
             :show-arrow="true" @select="onDropdownSelected"
           >
             <n-avatar round size="small" :src="info.avatar_url" />
@@ -131,17 +132,17 @@ function onAddHosts() {
 <style lang="stylus" scoped>
 .header
   width 100%
-  padding 10px 25px
+  padding 6px 16px 6px 76px
   box-sizing border-box
 
   & .logo-name
     color #333
-    font-size 18px
+    font-size 14px
     font-weight 600
 
   & .user
     &-control
-      margin-right 10px
+      margin-right 8px
 
   & .label-name
     color #333

@@ -23,6 +23,8 @@ import type {
 } from 'vue'
 
 declare global {
+  /** 构建日期，由 Vite define 注入 */
+  const __BUILD_DATE__: string
   const __TAURI_IPC__: any
   const __APP_INFO__: {
     pkg: {
@@ -78,6 +80,7 @@ declare global {
   declare interface Window extends globalThis {
     utools: UToolsApi
     __TAURI_IPC__: any
+    __TAURI_INTERNALS__: Record<string, unknown>
     __MonacoEditor: Record<string, monaco.editor.IStandaloneCodeEditor> | null
     $useMessage: MessageApiInjection
   }
@@ -121,9 +124,9 @@ declare global {
 }
 
 declare module 'vue' {
-  export type JSXComponent<Props = any> =
-    | { new(): ComponentPublicInstance<Props> }
-    | FunctionalComponent<Props>
+  export type JSXComponent<Props = any>
+    = | { new(): ComponentPublicInstance<Props> }
+      | FunctionalComponent<Props>
 }
 
 export type DynamicProps<T> = {
