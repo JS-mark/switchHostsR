@@ -94,13 +94,16 @@ pub fn run() {
                 WebviewWindowBuilder::new(app, "home", tauri::WebviewUrl::App("index.html".into()))
                     .title("switch-hosts-r")
                     .inner_size(800.0, 600.0)
+                    .min_inner_size(800.0, 600.0)
                     .center()
                     .decorations(false)
                     .transparent(true)
+                    .resizable(true)
+                    .maximizable(true)
                     .build()?;
 
             // 设置 window
-            let _ = ui::window::set_window_attribute(&window);
+            // let _ = ui::window::set_window_attribute(&window);
 
             // 设置窗口事件处理
             let window_clone = window.clone();
@@ -149,6 +152,10 @@ pub fn run() {
             api::users::get_current_user_info,
             api::users::check_username_availability,
             api::users::check_email_availability,
+            // 公开注册
+            api::users::register_user,
+            // 重置密码（忘记密码）
+            api::users::reset_password,
             // 用户管理
             api::users::get_users,
             api::users::get_user,
@@ -169,6 +176,8 @@ pub fn run() {
             api::hosts::export_hosts,
             api::hosts::import_hosts,
             api::hosts::search_hosts,
+            api::hosts::apply_hosts_to_system,
+            api::hosts::read_system_hosts_file,
             // 主机组管理
             api::host_groups::get_host_groups,
             api::host_groups::get_host_group,

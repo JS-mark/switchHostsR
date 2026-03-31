@@ -28,9 +28,11 @@ impl fmt::Debug for AppState {
     }
 }
 
-// 实现 Send + Sync 特性，确保可以在线程间安全传递
-unsafe impl Send for AppState {}
-unsafe impl Sync for AppState {}
+// 安全性说明：AppState 的所有字段均为 Mutex<T>，其中 T 包含：
+// - i32: 原生 Send + Sync 类型
+// - XxxHandler: 包含 DbPool (Arc<Pool<ConnectionManager<SqliteConnection>>>) 和 i32
+// Mutex<T> 在 T: Send 时自动实现 Send + Sync。
+// 因此不需要 unsafe impl，让编译器自动推导即可。
 
 impl AppState {
     pub fn new(

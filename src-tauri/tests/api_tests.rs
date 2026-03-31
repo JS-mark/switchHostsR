@@ -211,7 +211,7 @@ async fn test_users_service() {
     let user = auth_service.register(register_request).unwrap();
     assert_eq!(user.username, "test_user");
     assert_eq!(user.email, Some("test@example.com".to_string()));
-    assert_eq!(user.is_admin, Some(false));
+    assert_eq!(user.is_admin, Some(true)); // 首个用户自动成为管理员
 
     // 测试用户登录
     let login_request = LoginRequest {

@@ -18,7 +18,7 @@ tauri-build = { version = "2.0.1", features = [] }
 rand="0.8.5"
 serde_json = "1.0.116"
 serde = { version = "1.0.202", features = ["derive"] }
-tauri = { version = "2.0.1", features = [
+tauri = { version = "2.7", features = [
   "macos-private-api",
   "image-ico",
   "image-png",
@@ -33,14 +33,14 @@ rust-crypto = "0.2.36"
 bcrypt = "0.17.0"
 sysinfo = "0.30.9"
 window-vibrancy = "0.5.3"
-tauri-plugin-os = "2.0.1"
-tauri-plugin-fs = "2.0.1"
-tauri-plugin-dialog = "2.0.1"
-tauri-plugin-clipboard-manager = "2.0.1"
-tauri-plugin-notification = "2.0.1"
-tauri-plugin-process = "2.0.1"
-tauri-plugin-http = "2.0.1"
-tauri-plugin-shell = "2.0.1"
+tauri-plugin-os = "2.2"
+tauri-plugin-fs = "2.3"
+tauri-plugin-dialog = "2.2"
+tauri-plugin-clipboard-manager = "2.2"
+tauri-plugin-notification = "2.2"
+tauri-plugin-process = "2.2"
+tauri-plugin-http = "2.4"
+tauri-plugin-shell = "2.2"
 log = "0.4.22"
 env_logger = "0.11.3"
 thiserror = "1.0.58" # 错误处理
@@ -49,10 +49,12 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 hostname = "0.3"
 num_cpus = "1.0"
 base64 = "0.22.1"
+jsonwebtoken = "9.3.0"
 diesel_migrations = "2.2.0"
+dirs = "5.0"                                            # 获取用户主目录等标准路径
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-global-shortcut = "2.0.1"
+tauri-plugin-global-shortcut = "2.2"
 
 [dev-dependencies]
 tempfile = "3.10.1"                                 # 临时文件，用于测试

@@ -50,6 +50,13 @@ pub struct ChangePasswordRequest {
     pub new_password: String,
 }
 
+/// 重置密码请求
+#[derive(Debug, Deserialize)]
+pub struct ResetPasswordRequest {
+    pub email: String,
+    pub new_password: String,
+}
+
 /// 认证服务
 #[derive(Debug, Clone)]
 pub struct AuthService {
@@ -72,9 +79,9 @@ impl AuthService {
     pub fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
         let mut conn = self.pool.get()?;
 
-        // 查找用户
+        // 查找用户（支持用户名或邮箱登录）
         let user = users
-            .filter(username.eq(&request.username))
+            .filter(username.eq(&request.username).or(email.eq(&request.username)))
             .first::<User>(&mut conn)
             .map_err(|_| AuthError::UserNotFound)?;
 
@@ -155,6 +162,10 @@ impl AuthService {
             request.email.split('@').next().unwrap_or(&request.email).to_string()
         });
 
+        // 检查是否为首个用户，首个用户自动成为管理员
+        let user_count = users.count().get_result::<i64>(&mut conn)?;
+        let is_first_user = user_count == 0;
+
         // 创建用户
         let now = chrono::Utc::now().timestamp() as i32;
         let new_user = NewUser {
@@ -162,7 +173,7 @@ impl AuthService {
             password: hashed_password,
             email: Some(request.email.clone()),
             avatar: None,
-            is_admin: Some(false),
+            is_admin: Some(is_first_user),
             created_at: now,
             updated_at: now,
         };
@@ -203,9 +214,16 @@ impl AuthService {
     }
 
     /// 刷新令牌
+    ///
+    /// 校验传入的令牌必须是 refresh 类型
     pub fn refresh_token(&self, refresh_token: &str) -> Result<TokenPair> {
         // 验证刷新令牌
         let claims = get_token_manager().verify_token(refresh_token)?;
+
+        // 校验令牌类型必须是 refresh，防止 access token 混用
+        if claims.token_type != "refresh" {
+            return Err(AuthError::InvalidToken.into());
+        }
 
         // 获取用户信息
         let mut conn = self.pool.get()?;
@@ -302,6 +320,38 @@ impl AuthService {
         Ok(user)
     }
 
+    /// 重置密码（忘记密码，公开接口）
+    pub fn reset_password(&self, request: ResetPasswordRequest) -> Result<()> {
+        let mut conn = self.pool.get()?;
+
+        // 通过邮箱查找用户
+        let user = users
+            .filter(email.eq(&request.email))
+            .first::<User>(&mut conn)
+            .map_err(|_| AuthError::Other("该邮箱未注册".to_string()))?;
+
+        // 加密新密码
+        let hashed_new_password = hash(&request.new_password, DEFAULT_COST)?;
+
+        // 更新密码
+        let now = chrono::Utc::now().timestamp() as i32;
+        diesel::update(users.find(user.id))
+            .set((password.eq(hashed_new_password), updated_at.eq(now)))
+            .execute(&mut conn)?;
+
+        // 清除该用户所有会话，强制重新登录
+        get_session_manager(None).remove_user_sessions(user.id)?;
+
+        // 记录重置密码日志
+        self.log_auth_event(
+            user.id,
+            "reset_password",
+            Some(format!("用户 {} 重置密码", user.email.as_ref().unwrap_or(&user.username))),
+        )?;
+
+        Ok(())
+    }
+
     /// 检查用户名是否可用
     pub fn check_username_availability(&self, username_to_check: &str) -> Result<bool> {
         let mut conn = self.pool.get()?;
@@ -377,7 +427,7 @@ mod tests {
         let user = auth_service.register(register_request).unwrap();
         assert_eq!(user.username, "test_user");
         assert_eq!(user.email, Some("test@example.com".to_string()));
-        assert_eq!(user.is_admin, Some(false));
+        assert_eq!(user.is_admin, Some(true)); // 首个用户自动成为管理员
     }
 
     #[test]
@@ -419,6 +469,50 @@ mod tests {
         };
 
         let result = auth_service.login(login_request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_reset_password() {
+        let (pool, _temp_dir) = create_test_db();
+        let auth_service = AuthService::new(pool.clone());
+
+        // 先注册用户
+        let register_request = RegisterRequest {
+            email: "reset@example.com".to_string(),
+            password: "old_password".to_string(),
+            username: Some("reset_user".to_string()),
+            avatar: None,
+        };
+        auth_service.register(register_request).unwrap();
+
+        // 重置密码
+        let reset_request = ResetPasswordRequest {
+            email: "reset@example.com".to_string(),
+            new_password: "new_password".to_string(),
+        };
+        auth_service.reset_password(reset_request).unwrap();
+
+        // 用新密码登录
+        let login_request = LoginRequest {
+            username: "reset_user".to_string(),
+            password: "new_password".to_string(),
+            remember_me: Some(false),
+        };
+        let login_response = auth_service.login(login_request).unwrap();
+        assert_eq!(login_response.user.username, "reset_user");
+    }
+
+    #[test]
+    fn test_reset_password_email_not_found() {
+        let (pool, _temp_dir) = create_test_db();
+        let auth_service = AuthService::new(pool.clone());
+
+        let reset_request = ResetPasswordRequest {
+            email: "nonexistent@example.com".to_string(),
+            new_password: "new_password".to_string(),
+        };
+        let result = auth_service.reset_password(reset_request);
         assert!(result.is_err());
     }
 

@@ -1,23 +1,27 @@
 //! 令牌管理模块
 //!
 //! 提供 JWT 令牌的生成、验证和管理功能
+//! 使用 jsonwebtoken 库实现标准 HMAC-SHA256 签名
 
 use super::{AuthError, Role};
 use anyhow::Result;
-use base64::prelude::*;
+use base64::Engine;
 use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// JWT 声明
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String,      // 用户ID
-    pub username: String, // 用户名
-    pub role: Role,       // 用户角色
-    pub exp: i64,         // 过期时间
-    pub iat: i64,         // 签发时间
-    pub jti: String,      // JWT ID
+    pub sub: String,             // 用户ID
+    pub username: String,        // 用户名
+    pub role: Role,              // 用户角色
+    pub token_type: String,      // 令牌类型: "access" 或 "refresh"
+    pub exp: i64,                // 过期时间
+    pub iat: i64,                // 签发时间
+    pub jti: String,             // JWT ID
 }
 
 /// 令牌类型
@@ -44,19 +48,29 @@ pub struct TokenPair {
 }
 
 /// 令牌管理器
-#[derive(Debug)]
 pub struct TokenManager {
-    secret_key: String,
+    encoding_key: EncodingKey,
+    decoding_key: DecodingKey,
     access_token_duration: Duration,
     refresh_token_duration: Duration,
     revoked_tokens: std::sync::RwLock<HashMap<String, i64>>, // JTI -> 撤销时间
+}
+
+impl std::fmt::Debug for TokenManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TokenManager")
+            .field("access_token_duration", &self.access_token_duration)
+            .field("refresh_token_duration", &self.refresh_token_duration)
+            .finish()
+    }
 }
 
 impl TokenManager {
     /// 创建新的令牌管理器
     pub fn new(secret_key: String, access_token_hours: i64, refresh_token_days: i64) -> Self {
         Self {
-            secret_key,
+            encoding_key: EncodingKey::from_secret(secret_key.as_bytes()),
+            decoding_key: DecodingKey::from_secret(secret_key.as_bytes()),
             access_token_duration: Duration::hours(access_token_hours),
             refresh_token_duration: Duration::days(refresh_token_days),
             revoked_tokens: std::sync::RwLock::new(HashMap::new()),
@@ -102,14 +116,18 @@ impl TokenManager {
             sub: user_id.to_string(),
             username,
             role,
+            token_type: match token_type {
+                TokenType::Access => "access".to_string(),
+                TokenType::Refresh => "refresh".to_string(),
+            },
             exp,
             iat: now.timestamp(),
             jti: jti.clone(),
         };
 
-        // 这里应该使用真正的 JWT 库，比如 jsonwebtoken
-        // 为了简化，我们使用简单的 base64 编码
-        let token = self.encode_claims(&claims)?;
+        // 使用 jsonwebtoken 库进行标准 HMAC-SHA256 签名
+        let token = encode(&Header::default(), &claims, &self.encoding_key)
+            .map_err(|e| AuthError::Other(format!("生成令牌失败: {}", e)))?;
 
         Ok(TokenInfo {
             token,
@@ -121,13 +139,20 @@ impl TokenManager {
 
     /// 验证令牌
     pub fn verify_token(&self, token: &str) -> Result<Claims> {
-        let claims = self.decode_claims(token)?;
+        // 使用 jsonwebtoken 验证（自动校验 exp）
+        let mut validation = Validation::default();
+        // 不强制要求特定的 required_spec_claims（我们自己检查）
+        validation.validate_exp = true;
 
-        // 检查是否过期
-        let now = Utc::now().timestamp();
-        if now > claims.exp {
-            return Err(AuthError::TokenExpired.into());
-        }
+        let token_data = decode::<Claims>(token, &self.decoding_key, &validation)
+            .map_err(|e| match e.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                    anyhow::Error::from(AuthError::TokenExpired)
+                }
+                _ => anyhow::Error::from(AuthError::InvalidToken),
+            })?;
+
+        let claims = token_data.claims;
 
         // 检查是否被撤销
         if self.is_token_revoked(&claims.jti)? {
@@ -179,75 +204,47 @@ impl TokenManager {
     }
 
     /// 刷新访问令牌
+    ///
+    /// 校验传入的令牌必须是 refresh 类型，防止使用 access token 刷新
     pub fn refresh_access_token(&self, refresh_token: &str) -> Result<TokenInfo> {
         let claims = self.verify_token(refresh_token)?;
 
-        // 确保这是一个刷新令牌（通过某种方式标识，这里简化处理）
+        // 校验令牌类型必须是 refresh，防止 access token 混用
+        if claims.token_type != "refresh" {
+            return Err(AuthError::InvalidToken.into());
+        }
+
         let user_id: i32 = claims.sub.parse().map_err(|_| AuthError::InvalidToken)?;
 
         self.generate_token(user_id, claims.username, claims.role, TokenType::Access)
-    }
-
-    /// 编码声明（简化实现，实际应使用 JWT 库）
-    fn encode_claims(&self, claims: &Claims) -> Result<String> {
-        let json = serde_json::to_string(claims)
-            .map_err(|e| AuthError::Other(format!("序列化声明失败: {}", e)))?;
-
-        // 简单的 base64 编码 + 签名
-        let encoded = base64::prelude::BASE64_STANDARD.encode(json);
-        let signature = self.sign(&encoded)?;
-
-        Ok(format!("{}.{}", encoded, signature))
-    }
-
-    /// 解码声明（简化实现，实际应使用 JWT 库）
-    fn decode_claims(&self, token: &str) -> Result<Claims> {
-        let parts: Vec<&str> = token.split('.').collect();
-        if parts.len() != 2 {
-            return Err(AuthError::InvalidToken.into());
-        }
-
-        let encoded_claims = parts[0];
-        let signature = parts[1];
-
-        // 验证签名
-        let expected_signature = self.sign(encoded_claims)?;
-        if signature != expected_signature {
-            return Err(AuthError::InvalidToken.into());
-        }
-
-        // 解码声明
-        let json = base64::prelude::BASE64_STANDARD.decode(encoded_claims).map_err(|_| AuthError::InvalidToken)?;
-
-        let json_str = String::from_utf8(json).map_err(|_| AuthError::InvalidToken)?;
-
-        let claims: Claims =
-            serde_json::from_str(&json_str).map_err(|_| AuthError::InvalidToken)?;
-
-        Ok(claims)
-    }
-
-    /// 签名（简化实现）
-    fn sign(&self, data: &str) -> Result<String> {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        data.hash(&mut hasher);
-        self.secret_key.hash(&mut hasher);
-
-        Ok(format!("{:x}", hasher.finish()))
     }
 }
 
 /// 全局令牌管理器实例
 static TOKEN_MANAGER: std::sync::OnceLock<TokenManager> = std::sync::OnceLock::new();
 
+/// 生成随机密钥字符串（32 字节，base64 编码）
+///
+/// 桌面应用场景下，每次启动生成新的随机密钥即可。
+/// 重启后旧 token 自动失效，用户需重新登录，这是可接受的行为。
+fn generate_random_secret() -> String {
+    let mut rng = rand::thread_rng();
+    let random_bytes: Vec<u8> = (0..32).map(|_| rng.gen::<u8>()).collect();
+    base64::engine::general_purpose::STANDARD.encode(&random_bytes)
+}
+
 /// 获取全局令牌管理器
+///
+/// 优先从环境变量 `JWT_SECRET` 读取密钥；
+/// 若未设置，自动生成随机密钥（每次重启后 token 失效，桌面应用可接受）。
 pub fn get_token_manager() -> &'static TokenManager {
     TOKEN_MANAGER.get_or_init(|| {
         let secret_key = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "default_secret_key_change_in_production".to_string());
+            .unwrap_or_else(|_| {
+                let random_key = generate_random_secret();
+                log::info!("未设置 JWT_SECRET 环境变量，已自动生成随机密钥");
+                random_key
+            });
 
         TokenManager::new(secret_key, 2, 7) // 访问令牌2小时，刷新令牌7天
     })
@@ -308,5 +305,56 @@ mod tests {
 
         // 验证令牌已被撤销
         assert!(manager.verify_token(&token_info.token).is_err());
+    }
+
+    #[test]
+    fn test_invalid_token_rejected() {
+        let manager = TokenManager::new("test_secret".to_string(), 1, 7);
+
+        // 用不同密钥生成的令牌应该被拒绝
+        let other_manager = TokenManager::new("other_secret".to_string(), 1, 7);
+        let token_info = other_manager
+            .generate_token(1, "test_user".to_string(), Role::User, TokenType::Access)
+            .unwrap();
+
+        assert!(manager.verify_token(&token_info.token).is_err());
+    }
+
+    #[test]
+    fn test_refresh_token_type_validation() {
+        let manager = TokenManager::new("test_secret".to_string(), 1, 7);
+
+        // 生成 access token
+        let access_token = manager
+            .generate_token(1, "test_user".to_string(), Role::User, TokenType::Access)
+            .unwrap();
+
+        // 尝试用 access token 刷新应该失败
+        assert!(manager.refresh_access_token(&access_token.token).is_err());
+
+        // 生成 refresh token
+        let refresh_token = manager
+            .generate_token(1, "test_user".to_string(), Role::User, TokenType::Refresh)
+            .unwrap();
+
+        // 用 refresh token 刷新应该成功
+        assert!(manager.refresh_access_token(&refresh_token.token).is_ok());
+    }
+
+    #[test]
+    fn test_token_type_in_claims() {
+        let manager = TokenManager::new("test_secret".to_string(), 1, 7);
+
+        let access_token = manager
+            .generate_token(1, "test_user".to_string(), Role::User, TokenType::Access)
+            .unwrap();
+        let claims = manager.verify_token(&access_token.token).unwrap();
+        assert_eq!(claims.token_type, "access");
+
+        let refresh_token = manager
+            .generate_token(1, "test_user".to_string(), Role::User, TokenType::Refresh)
+            .unwrap();
+        let claims = manager.verify_token(&refresh_token.token).unwrap();
+        assert_eq!(claims.token_type, "refresh");
     }
 }

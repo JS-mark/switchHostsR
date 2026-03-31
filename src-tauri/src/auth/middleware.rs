@@ -164,6 +164,14 @@ impl AuthState {
     }
 }
 
+/// 全局认证状态实例
+static GLOBAL_AUTH_STATE: std::sync::OnceLock<AuthState> = std::sync::OnceLock::new();
+
+/// 获取全局认证状态
+pub fn get_global_auth_state() -> &'static AuthState {
+    GLOBAL_AUTH_STATE.get_or_init(|| AuthState::new())
+}
+
 /// 用户资源访问检查装饰器宏
 #[macro_export]
 macro_rules! require_user_resource {

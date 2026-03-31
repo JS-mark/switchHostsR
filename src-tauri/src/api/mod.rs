@@ -10,6 +10,7 @@ pub mod public_type;
 pub mod system;
 pub mod users;
 
+use crate::auth::middleware::get_global_auth_state;
 use crate::auth::AuthContext;
 use crate::db::services::ServiceFactory;
 use serde::{Deserialize, Serialize};
@@ -84,7 +85,7 @@ impl<T> From<anyhow::Error> for ApiResult<T> {
                 }
                 crate::auth::AuthError::TokenExpired => Self::auth_error("令牌已过期".to_string()),
                 crate::auth::AuthError::InvalidToken => Self::auth_error("令牌无效".to_string()),
-                crate::auth::AuthError::Other(msg) => Self::auth_error(msg.clone()),
+                crate::auth::AuthError::Other(msg) => Self::param_error(msg.clone()),
             }
         } else {
             Self::internal_error(error.to_string())
@@ -93,12 +94,19 @@ impl<T> From<anyhow::Error> for ApiResult<T> {
 }
 
 /// 获取当前认证上下文的辅助函数
+/// 通过全局 AuthState 获取当前登录用户的认证信息
 pub fn get_auth_context() -> Result<AuthContext, crate::auth::AuthError> {
-    // 这个函数需要重新实现，因为它需要访问认证状态
-    Err(crate::auth::AuthError::NotAuthenticated)
+    get_global_auth_state().get_auth_context().map_err(|e| {
+        // 尝试将 anyhow::Error 转为 AuthError
+        match e.downcast::<crate::auth::AuthError>() {
+            Ok(auth_err) => auth_err,
+            Err(_) => crate::auth::AuthError::NotAuthenticated,
+        }
+    })
 }
 
 /// 验证认证上下文的宏
+/// 使用全局 AuthState 获取认证上下文，无需依赖局部变量
 #[macro_export]
 macro_rules! require_auth {
     () => {

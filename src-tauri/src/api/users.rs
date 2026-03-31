@@ -3,9 +3,10 @@
 //! 处理用户相关的 Tauri 命令
 
 use crate::api::{ApiResult, AppState, PageData, PageParams};
+use crate::auth::middleware::get_global_auth_state;
 use crate::auth::token::TokenPair;
 use crate::db::models::users::User;
-use crate::db::services::auth_service::{ChangePasswordRequest, LoginRequest, LoginResponse};
+use crate::db::services::auth_service::{ChangePasswordRequest, LoginRequest, LoginResponse, ResetPasswordRequest};
 use crate::db::services::user_service::*;
 use crate::{require_auth, safe_execute};
 use serde::Deserialize;
@@ -58,7 +59,16 @@ pub async fn user_login(
         remember_me,
     };
 
-    Ok(safe_execute!(auth_service.login(login_request)))
+    match auth_service.login(login_request) {
+        Ok(response) => {
+            // 登录成功后，将 session 注入 AuthState
+            if let Err(e) = get_global_auth_state().login(response.session.clone()) {
+                log::error!("设置认证状态失败: {}", e);
+            }
+            Ok(ApiResult::success(response))
+        }
+        Err(e) => Ok(ApiResult::from(e)),
+    }
 }
 
 /// 用户登出
@@ -66,6 +76,11 @@ pub async fn user_login(
 pub async fn logout(state: State<'_, AppState>) -> Result<ApiResult<()>, ()> {
     let auth = require_auth!();
     let auth_service = state.service_factory.auth_service();
+
+    // 登出后清除 AuthState
+    if let Err(e) = get_global_auth_state().logout() {
+        log::warn!("清除认证状态失败: {}", e);
+    }
 
     Ok(safe_execute!(auth_service.logout(&auth)))
 }
@@ -98,6 +113,22 @@ pub async fn change_password(
     Ok(safe_execute!(
         auth_service.change_password(&auth, change_request)
     ))
+}
+
+/// 重置密码（忘记密码，公开接口）
+#[tauri::command]
+pub async fn reset_password(
+    state: State<'_, AppState>,
+    email: String,
+    new_password: String,
+) -> Result<ApiResult<()>, ()> {
+    let auth_service = state.service_factory.auth_service();
+    let reset_request = ResetPasswordRequest {
+        email,
+        new_password,
+    };
+
+    Ok(safe_execute!(auth_service.reset_password(reset_request)))
 }
 
 /// 验证令牌
@@ -142,6 +173,25 @@ pub async fn check_email_availability(
     let auth_service = state.service_factory.auth_service();
 
     Ok(safe_execute!(auth_service.check_email_availability(&email)))
+}
+
+// ==================== 公开注册接口 ====================
+
+/// 用户注册（公开接口，无需登录）
+#[tauri::command]
+pub async fn register_user(
+    state: State<'_, AppState>,
+    request: CreateUserRequest,
+) -> Result<ApiResult<User>, ()> {
+    let auth_service = state.service_factory.auth_service();
+    let register_req = crate::db::services::auth_service::RegisterRequest {
+        email: request.email,
+        password: request.password,
+        username: request.username,
+        avatar: request.avatar,
+    };
+
+    Ok(safe_execute!(auth_service.register(register_req)))
 }
 
 // ==================== 用户管理接口 ====================
@@ -193,12 +243,16 @@ pub async fn get_user(state: State<'_, AppState>, user_id: i32) -> Result<ApiRes
     Ok(safe_execute!(user_service.get_user_by_id(&auth, user_id)))
 }
 
-/// 创建用户
+/// 创建用户（管理员操作）
+///
+/// 需要管理员权限。开放注册应使用独立的注册接口。
+/// 此命令用于管理员后台手动创建用户。
 #[tauri::command]
 pub async fn create_user(
     state: State<'_, AppState>,
     request: CreateUserRequest,
 ) -> Result<ApiResult<User>, ()> {
+    let _auth = require_auth!();
     let auth_service = state.service_factory.auth_service();
     let register_req = crate::db::services::auth_service::RegisterRequest {
         email: request.email,
