@@ -1,5 +1,7 @@
-import type { UserConfig } from '@rspress/core';
+import type { UserConfig } from '@rspress/core'
+
 import { createTransformerDiff, createTransformerErrorLevel, createTransformerFocus, createTransformerHighlight, createTransformerLineNumber, pluginShiki } from '@rspress/plugin-shiki'
+
 const config: UserConfig = {
   head: [
     ['link', { rel: 'stylesheet', href: '/custom.css' }],
@@ -19,7 +21,7 @@ const config: UserConfig = {
   icon: '/logo.svg',
   logo: {
     light: '/logo.svg',
-    dark: '/logo.svg'
+    dark: '/logo.svg',
   },
   logoText: 'Switch Hosts R',
   search: {
@@ -186,6 +188,6 @@ const config: UserConfig = {
     enableContentAnimation: true,
     enableAppearanceAnimation: true, // 是否启用内容动画
   },
-};
+}
 
-export default config;
+export default config

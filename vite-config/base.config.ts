@@ -14,6 +14,9 @@ export function getBaseConfig(env: ConfigEnv) {
   // 打印环境变量
   console.warn('[ env ]', env)
   return {
+    define: {
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString().split('T')[0]),
+    },
     plugins: [
       createSvgIconsPlugin({
         // 指定需要缓存的图标文件夹

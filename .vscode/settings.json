@@ -42,5 +42,10 @@
   "rust-analyzer.linkedProjects": [
     "./src-tauri/Cargo.toml"
   ],
-  "rust-analyzer.showUnlinkedFileNotification": false
+  "rust-analyzer.showUnlinkedFileNotification": false,
+  "i18n-ally.localesPaths": [
+    "src/langs",
+    "public/vs/language",
+    "src/components/editor/languages"
+  ]
 }
