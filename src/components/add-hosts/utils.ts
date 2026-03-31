@@ -3,8 +3,9 @@ import type { RouteRecordRaw } from 'vue-router'
 
 import { nanoid } from 'nanoid'
 import { debounce } from 'lodash-es'
-import { useLocalStore } from '@/store'
 import { SettingsSharp } from '@vicons/ionicons5'
+
+import { useLocalStore } from '@/store'
 
 export interface Options {
   name: string

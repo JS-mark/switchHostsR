@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import type { DataTableColumns } from 'naive-ui'
+
+import { NTag } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { getAllLogs } from '@/apis'
 import { h, onMounted, reactive } from 'vue'
+
+import { getAllLogs } from '@/apis'
 import { formatTimeV2, sendLog } from '@/utils'
-import { type DataTableColumns, NTag } from 'naive-ui'
 
 defineOptions({
   name: 'AdminLogs',
@@ -11,14 +14,13 @@ defineOptions({
 
 interface Logs {
   id: number
-  content: string
-  log_type: number
-  user_email: string
-  user_name: string
-  user_avatar_url: string
-  password: string
+  user_id: number
+  action: string
+  target_type: string
+  target_id: number | null
+  details: string | null
+  username: string
   created_at: number
-  created_by: number
 }
 const { t } = useI18n()
 
@@ -27,7 +29,7 @@ function createColumns(): DataTableColumns<Logs> {
     {
       type: 'expand',
       renderExpand: (rowData) => {
-        return rowData.content
+        return rowData.details || '-'
       },
     },
     {
@@ -35,65 +37,33 @@ function createColumns(): DataTableColumns<Logs> {
       key: 'id',
     },
     {
-      title: '日志类型',
-      key: 'log_type',
-      render(rowData, _) {
-        const getTag = (type: number) => {
-          let tagType = 'default'
-          let text = ''
-          switch (type) {
-            case 0:
-              tagType = 'success'
-              text = '更新'
-              break
-            case -1:
-              tagType = 'warning'
-              text = '未知'
-
-              break
-            case 1:
-              tagType = 'error'
-              text = '删除'
-              break
-            case 2:
-              tagType = 'success'
-              text = '增加'
-              break
-          }
-          return {
-            tagType,
-            text,
-          }
+      title: t('操作'),
+      key: 'action',
+    },
+    {
+      title: '目标类型',
+      key: 'target_type',
+      render(rowData) {
+        const typeMap: Record<string, string> = {
+          system: '系统',
+          hosts: 'Hosts',
+          user: '用户',
         }
-        const { tagType, text } = getTag(rowData.log_type)
         return h(NTag, {
           bordered: false,
-          type: tagType as typeof NTag['type'],
-        }, () => t(text))
+          type: 'info',
+          size: 'small',
+        }, () => typeMap[rowData.target_type] || rowData.target_type)
       },
     },
     {
       title: t('用户名'),
-      key: 'user_name',
-    },
-    {
-      title: t('头像'),
-      key: 'user_avatar_url',
-      render(rowData, _) {
-        return h('img', {
-          src: rowData.user_avatar_url,
-          style: 'width: 32px; height: 32px; border-radius: 50%;',
-        })
-      },
-    },
-    {
-      title: t('邮箱'),
-      key: 'user_email',
+      key: 'username',
     },
     {
       title: t('创建时间'),
       key: 'created_at',
-      render(rowData, _) {
+      render(rowData) {
         return h('span', {}, formatTimeV2(Number(rowData.created_at), 'YYYY-MM-DD HH:mm:ss'))
       },
     },
@@ -106,42 +76,25 @@ const data = reactive({
   loading: true,
   pagination: {
     page: 1,
-    pageSize: 5,
-    itemCount: 0,
+    pageSize: 10,
     showSizePicker: true,
     pageSizes: [5, 10, 15, 20, 30],
-    onChange: (page: number) => {
-      data.pagination.page = page
-      getData()
-    },
-    onUpdatePageSize: (pageSize: number) => {
-      data.pagination.pageSize = pageSize
-      data.pagination.page = 1
-      getData()
-    },
   },
 })
 
 function getData() {
   data.loading = true
-  getAllLogs({
-    page: data.pagination.page,
-    pageSize: data.pagination.pageSize,
-  }).then((res: any) => {
-    console.log('e12e', res)
-    data.list = res.data.list
-    data.pagination.itemCount = res.data.total
+  getAllLogs().then((res: any) => {
+    if (res.code === 200) {
+      data.list = res.data || []
+    }
+    else {
+      data.list = []
+    }
   }).catch((err) => {
     data.list = []
-    data.pagination.itemCount = 0
-    // 发送错误日志
     sendLog({
-      msg: JSON.stringify({
-        error: {
-          msg: err.message,
-          stack: err.stack,
-        },
-      }),
+      msg: `获取日志失败: ${err.message || err.msg || '未知错误'}`,
       level: 'error',
     })
   }).finally(() => {
@@ -162,6 +115,5 @@ onMounted(() => {
     :row-key="(row) => row.id"
     :pagination="data.pagination"
     bordered
-    remote
   />
 </template>

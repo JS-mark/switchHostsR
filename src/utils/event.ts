@@ -9,6 +9,8 @@ export interface EmitterEvents {
   'editor-init': { editor: editor.IStandaloneCodeEditor, id: string }
   'on-add-route': void
   'on-restore-history-route': RouteRecordRaw[]
+  /** 新 hosts 创建成功后触发，通知列表刷新 */
+  'hosts-created': void
 }
 
 /**

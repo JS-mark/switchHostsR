@@ -1,42 +1,44 @@
 import { useBridgeFunc } from '@/utils'
 
-import type { GetPage } from './public'
-
 /**
  * 获取所有操作日志
  * @returns Promise
  */
-export function getAllLogs(options: GetPage) {
+export function getAllLogs() {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('get_all_logs', options)
+    bridge.core.invoke('get_logs')
       .then(res => resolve(res as any))
       .catch(err => reject(err))
   })
 }
 
+export interface CreateLogOptions {
+  action: string
+  targetType: string
+  targetId?: number
+  details?: string
+}
+
 /**
- * 插入本地操作日志
- * @param logType -- 操作类型 0:更新,1:删除,2:增加,-1:未知
- * @param { object } data
+ * 创建操作日志
+ * @param options 日志选项
  * @returns Promise
  */
-export function insertLog(logType: number, data: Record<string, any>) {
-  const content = JSON.stringify(data)
+export function insertLog(options: CreateLogOptions) {
   return useBridgeFunc(() => {
     // NOTE: 待实现
   }, (bridge, resolve, reject) => {
-    bridge.core.invoke('add_log', {
-      logOptions: {
-        // logType: 2, // 0: 更新，1 删除，2 增加，-1 未知
-        content,
-        log_type: logType,
+    bridge.core.invoke('create_log', {
+      request: {
+        action: options.action,
+        target_type: options.targetType,
+        target_id: options.targetId ?? null,
+        details: options.details ?? null,
       },
     })
-      .then((res) => {
-        resolve(res)
-      })
+      .then(res => resolve(res))
       .catch(err => reject(err))
   })
 }
