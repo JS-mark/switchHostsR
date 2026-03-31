@@ -1,40 +1,107 @@
 <script lang="ts" setup>
+import type { DataTableColumns } from 'naive-ui'
+
 import { useI18n } from 'vue-i18n'
-import { getAllUsers } from '@/apis'
+import { h, onMounted, reactive, ref } from 'vue'
+import {
+
+  NButton,
+  NForm,
+  NFormItem,
+  NInput,
+  NSpace,
+  NSwitch,
+  NTag,
+  useDialog,
+  useMessage,
+} from 'naive-ui'
+
+import type { User } from '@/apis/public'
+
 import { formatTimeV2 } from '@/utils'
-import { h, onMounted, reactive } from 'vue'
-import { type DataTableColumns, NButton, NSpace, NSwitch, NTag, useMessage } from 'naive-ui'
+import { deleteUserById, getAllUsers, updateUserInfo } from '@/apis'
 
 defineOptions({
   name: 'AdminHome',
 })
 
-interface User {
-  id: number
-  name: string
-  email: string
-  status: number
-  user_level: number
-  password: string
-  is_del: number
-  is_third: number
-  third_account_uid: string
-  created_at: string
-  updated_at: string
-}
 const { t } = useI18n()
 const message = useMessage()
+const dialogInstance = useDialog()
+const isEditModalVisible = ref(false)
+const editingUser = ref<User | null>(null)
+const editForm = reactive({
+  username: '',
+  email: '',
+  avatar: '',
+})
 
-function editUser(user: User) {
-  message.info(`编辑用户：${user.name}`)
+function openEditModal(user: User) {
+  editingUser.value = user
+  editForm.username = user.username
+  editForm.email = user.email || ''
+  editForm.avatar = user.avatar || ''
+  isEditModalVisible.value = true
 }
 
-function switchUser(user: User, status: boolean) {
-  message.info(`删除用户：${user.name}, ${status}`)
+function submitEdit() {
+  if (!editingUser.value)
+    return
+
+  updateUserInfo(editingUser.value.id, {
+    username: editForm.username || undefined,
+    email: editForm.email || undefined,
+    avatar: editForm.avatar || undefined,
+  }).then((res: { code: number, msg: string }) => {
+    if (res.code === 200) {
+      message.success('用户信息更新成功')
+      isEditModalVisible.value = false
+      getData()
+    }
+    else {
+      message.error(res.msg || '更新失败')
+    }
+  }).catch((err: { msg?: string }) => {
+    message.error(err.msg || '更新失败')
+  })
 }
 
-function delUser(user: User) {
-  message.info(`删除用户：${user.name}`)
+function handleSwitchAdmin(user: User, isAdmin: boolean) {
+  updateUserInfo(user.id, {
+    role: isAdmin ? 'admin' : 'user',
+  }).then((res: { code: number, msg: string }) => {
+    if (res.code === 200) {
+      message.success(isAdmin ? '已设置为管理员' : '已取消管理员权限')
+      getData()
+    }
+    else {
+      message.error(res.msg || '操作失败')
+    }
+  }).catch((err: { msg?: string }) => {
+    message.error(err.msg || '操作失败')
+  })
+}
+
+function handleDeleteUser(user: User) {
+  dialogInstance.error({
+    title: '删除用户',
+    content: `确定要删除用户 "${user.username}" 吗？此操作不可恢复。`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      deleteUserById(user.id).then((res: { code: number, msg: string }) => {
+        if (res.code === 200) {
+          message.success('删除成功')
+          getData()
+        }
+        else {
+          message.error(res.msg || '删除失败')
+        }
+      }).catch((err: { msg?: string }) => {
+        message.error(err.msg || '删除失败')
+      })
+    },
+  })
 }
 
 function createColumns(): DataTableColumns<User> {
@@ -42,59 +109,63 @@ function createColumns(): DataTableColumns<User> {
     {
       title: 'ID',
       key: 'id',
+      width: 60,
     },
     {
       title: '用户名',
-      key: 'name',
+      key: 'username',
     },
     {
       title: '邮箱',
       key: 'email',
+      render(rowData) {
+        return h('span', {}, rowData.email || '-')
+      },
     },
     {
-      title: '三方账户',
-      key: ' is_third',
-      render(rowData, _) {
-        const type = rowData.is_third ? 'success' : 'warning'
+      title: '角色',
+      key: 'is_admin',
+      render(rowData) {
+        const isAdmin = rowData.is_admin === true
         return h(NTag, {
-          type,
+          type: isAdmin ? 'warning' : 'info',
         }, {
-          default: () => rowData.is_third ? '是' : '否',
+          default: () => isAdmin ? '管理员' : '普通用户',
         })
       },
     },
     {
       title: '创建时间',
       key: 'created_at',
-      render(rowData, _) {
+      render(rowData) {
         return h('span', {}, formatTimeV2(rowData.created_at, 'YYYY-MM-DD HH:mm:ss'))
       },
     },
     {
       title: '修改时间',
       key: 'updated_at',
-      render(rowData, _) {
+      render(rowData) {
         return h('span', {}, formatTimeV2(rowData.updated_at, 'YYYY-MM-DD HH:mm:ss'))
       },
     },
     {
-      title: '状态',
-      key: 'status',
-      render(rowData, _) {
+      title: '管理员',
+      key: 'admin_switch',
+      width: 100,
+      render(rowData) {
         return h(NSwitch, {
-          'modelValue': rowData.status === 1,
+          'value': rowData.is_admin === true,
           'round': false,
-          'checkedValue': t('启用'),
-          'uncheckedValue': t('禁用'),
           'on-update:value': (val: boolean) => {
-            switchUser(rowData, val)
+            handleSwitchAdmin(rowData, val)
           },
         })
       },
     },
     {
-      title: 'Action',
+      title: '操作',
       key: 'actions',
+      width: 180,
       render(row) {
         return h(NSpace, {}, () => [
           h(
@@ -104,7 +175,7 @@ function createColumns(): DataTableColumns<User> {
               tertiary: true,
               size: 'small',
               type: 'primary',
-              onClick: () => editUser(row),
+              onClick: () => openEditModal(row),
             },
             { default: () => t('edit_user') },
           ),
@@ -115,7 +186,7 @@ function createColumns(): DataTableColumns<User> {
               tertiary: true,
               type: 'error',
               size: 'small',
-              onClick: () => delUser(row),
+              onClick: () => handleDeleteUser(row),
             },
             { default: () => t('del_user') },
           ),
@@ -129,36 +200,21 @@ const data = reactive({
   list: [] as User[],
   columns: createColumns(),
   loading: true,
-  pagination: {
-    page: 1,
-    pageSize: 10,
-    itemCount: 0,
-    showSizePicker: true,
-    pageSizes: [15, 20, 30],
-    onChange: (page: number) => {
-      data.pagination.page = page
-      getData()
-    },
-    onUpdatePageSize: (pageSize: number) => {
-      data.pagination.pageSize = pageSize
-      data.pagination.page = 1
-      getData()
-    },
-  },
 })
 
 function getData() {
   data.loading = true
-  getAllUsers({
-    page: data.pagination.page,
-    pageSize: data.pagination.pageSize,
-  }).then((res: any) => {
-    data.list = res.data.list
-    data.pagination.itemCount = res.data.total
-  }).catch((err) => {
+  getAllUsers().then((res: { code: number, data: User[], msg: string }) => {
+    if (res.code === 200) {
+      data.list = res.data
+    }
+    else {
+      message.error(res.msg || '获取用户列表失败')
+      data.list = []
+    }
+  }).catch((err: { msg?: string }) => {
     console.error(err)
     data.list = []
-    data.pagination.itemCount = 0
   }).finally(() => {
     data.loading = false
   })
@@ -170,12 +226,40 @@ onMounted(() => {
 </script>
 
 <template>
-  <n-data-table
-    :columns="data.columns"
-    :data="data.list"
-    :loading="data.loading"
-    :pagination="data.pagination"
-    bordered
-    remote
-  />
+  <div class="admin-user-page">
+    <n-data-table
+      :columns="data.columns"
+      :data="data.list"
+      :loading="data.loading"
+      bordered
+    />
+
+    <!-- 编辑用户弹窗 -->
+    <n-modal
+      v-model:show="isEditModalVisible"
+      preset="dialog"
+      title="编辑用户"
+      positive-text="保存"
+      negative-text="取消"
+      @positive-click="submitEdit"
+    >
+      <n-form label-placement="left" label-width="80">
+        <n-form-item label="用户名">
+          <n-input v-model:value="editForm.username" placeholder="请输入用户名" />
+        </n-form-item>
+        <n-form-item label="邮箱">
+          <n-input v-model:value="editForm.email" placeholder="请输入邮箱" />
+        </n-form-item>
+        <n-form-item label="头像">
+          <n-input v-model:value="editForm.avatar" placeholder="请输入头像 URL" />
+        </n-form-item>
+      </n-form>
+    </n-modal>
+  </div>
 </template>
+
+<style lang="less" scoped>
+.admin-user-page {
+  padding: 10px;
+}
+</style>

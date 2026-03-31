@@ -1,8 +1,10 @@
-import type { User } from '@/apis/system/user'
 import type { DirectiveBinding, FunctionDirective, VNode } from 'vue'
 
-import { useUserStore } from '@/store'
 import { isArray, isFunction, isObject, omit } from 'lodash-es'
+
+import type { User } from '@/apis/system/user'
+
+import { useUserStore } from '@/store'
 
 type AuthCallBack = (event: { user: User, el: HTMLElement, vnode: VNode }) => boolean | void
 type AuthPromiseCallBack = (event: { user: User, el: HTMLElement, vnode: VNode }, ...args: any[]) => Promise<boolean | void>

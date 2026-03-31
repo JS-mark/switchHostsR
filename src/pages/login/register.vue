@@ -1,14 +1,15 @@
 <script lang="ts">
 import type { FormInst, FormItemRule } from 'naive-ui'
 
-import { addUser } from '@/apis'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { debounce } from 'lodash-es'
 import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
+
+import { addUser } from '@/apis'
+import { useUserStore } from '@/store'
 
 import { mixins } from './mixins'
 
@@ -47,7 +48,7 @@ export default defineComponent({
             username: data.nickname || undefined,
           }).then((res: any) => {
             if (res.code !== 200)
-              return Promise.reject(new Error('注册失败'))
+              return Promise.reject(res.msg)
 
             message.success(t('注册成功'))
             setMode('email')
@@ -58,7 +59,8 @@ export default defineComponent({
               name: 'Home',
             })
           }).catch((err) => {
-            message.error(t('注册失败'))
+            const errMsg = typeof err === 'string' ? err : (err?.msg || err?.message || t('注册失败'))
+            message.error(errMsg)
             console.error('err', err)
           }).finally(() => {
             mixins.loading = false
@@ -143,7 +145,7 @@ export default defineComponent({
     <n-button
       block
       class="!w-full btn"
-      size="large"
+      size="medium"
       type="primary"
       dashed
       @click="onRegister"

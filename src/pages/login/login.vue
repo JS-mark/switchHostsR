@@ -5,9 +5,12 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import { loginPlatform } from '@/apis'
-import { type UserMode, useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
+
+import type { UserMode } from '@/store'
+
+import { loginPlatform } from '@/apis'
+import { useUserStore } from '@/store'
 
 import { mixins } from './mixins'
 
@@ -136,7 +139,7 @@ export default defineComponent({
     <n-button
       block
       class="!w-full btn"
-      size="large"
+      size="medium"
       type="primary"
       dashed
       @click="login"

@@ -1,13 +1,15 @@
 <script lang="ts">
 import { storeToRefs } from 'pinia'
+import { defineComponent, reactive, ref } from 'vue'
+
 // import { debugUser } from '@/utils'
 import { useUserStore } from '@/store'
-import { defineComponent, reactive, ref } from 'vue'
 
 import Login from './login.vue'
 import { mixins } from './mixins'
 import Register from './register.vue'
 import ThirdLogin from './third-login.vue'
+import ForgotPassword from './forgot-password.vue'
 
 // 调试用
 // debugUser()
@@ -18,6 +20,7 @@ export default defineComponent({
     Login,
     Register,
     ThirdLogin,
+    ForgotPassword,
   },
   setup() {
     const data = reactive({
@@ -39,6 +42,10 @@ export default defineComponent({
       event.reset && (data.mode = '')
     }
 
+    const onForgot = (event: any) => {
+      event.reset && (data.mode = '')
+    }
+
     const switchMode = (mode: 'register' | 'login') => {
       data.mode = mode
     }
@@ -46,6 +53,7 @@ export default defineComponent({
     return {
       onLogin,
       onRegister,
+      onForgot,
       switchMode,
       onThirdLogin,
       data,
@@ -81,7 +89,7 @@ export default defineComponent({
             <n-tabs
               class="card-tabs"
               default-value="login"
-              size="large"
+              size="medium"
               animated
               pane-wrapper-style="margin: 0 -4px"
               pane-style="padding-left: 4px; padding-right: 4px; box-sizing: border-box;"
@@ -91,6 +99,9 @@ export default defineComponent({
               </n-tab-pane>
               <n-tab-pane name="signup" tab="注册">
                 <Register @on-callback="onRegister" />
+              </n-tab-pane>
+              <n-tab-pane name="forgot" :tab="$t('login.forgotPassword')">
+                <ForgotPassword @on-callback="onForgot" />
               </n-tab-pane>
               <n-tab-pane name="third-login" tab="三方登录">
                 <ThirdLogin @on-callback="onThirdLogin" />
@@ -105,9 +116,12 @@ export default defineComponent({
 
 <style lang="stylus" scoped>
 .main-login
-  width 100%
-  height 100%
-  position relative
+  width 100vw
+  height 100vh
+  position fixed
+  top 0
+  left 0
+  z-index 1
   background-color rgba(0, 0, 0, .3)
 
   & .content

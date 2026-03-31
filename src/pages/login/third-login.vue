@@ -4,11 +4,14 @@ import type { FormInst } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useMessage } from 'naive-ui'
-import { getUser } from '@/apis/user'
 import { useRouter } from 'vue-router'
-import { thirdAccountLogin } from '@/apis'
-import { type UserMode, useUserStore } from '@/store'
 import { computed, defineComponent, reactive, ref } from 'vue'
+
+import type { UserMode } from '@/store'
+
+import { getUser } from '@/apis/user'
+import { useUserStore } from '@/store'
+import { thirdAccountLogin } from '@/apis'
 
 import { mixins } from './mixins'
 
@@ -74,7 +77,7 @@ export default defineComponent({
                 setLogin(true)
                 setMode(data.userMode)
                 setUserInfo(resData)
-                message.success('登录成功')
+                message.success(t('登录成功'))
 
                 setTimeout(() => {
                   router.replace({

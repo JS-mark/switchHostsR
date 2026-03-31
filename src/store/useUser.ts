@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia'
-import { setLoginUser } from '@/utils'
 import { isEmpty, set } from 'lodash-es'
 
-export type UserMode =
-  | 'weibo'
-  | 'googel'
-  | 'github'
-  | 'instagram'
-  | 'linkedin'
-  | 'email'
+import { setLoginUser } from '@/utils'
+
+export type UserMode
+  = | 'weibo'
+    | 'googel'
+    | 'github'
+    | 'instagram'
+    | 'linkedin'
+    | 'email'
 
 export interface User {
   nickname?: string

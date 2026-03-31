@@ -1,8 +1,9 @@
 import type { App } from 'vue'
 
+import { createRouter, createWebHashHistory } from 'vue-router'
+
 import { useUserStore } from '@/store'
 import { getLoginUser } from '@/utils'
-import { createRouter, createWebHashHistory } from 'vue-router'
 
 import routes from './routes'
 
@@ -11,7 +12,7 @@ export const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const store = useUserStore()
   const data = getLoginUser()
   if (data) {
@@ -23,12 +24,9 @@ router.beforeEach((to, from) => {
       return true
     }
   }
-  if (!store.isLogin) {
-    if (to.name !== 'Login' || (to.name !== 'Login' && from.name !== 'Login')) {
-      router.replace({
-        name: store.isLogin ? (to.name as string) : 'Login',
-      })
-    }
+  // 未登录时，允许访问登录页，其他页面重定向到登录
+  if (!store.isLogin && to.name !== 'Login') {
+    return { name: 'Login' }
   }
   return true
 })
@@ -36,7 +34,7 @@ router.beforeEach((to, from) => {
 export function useRouter(app: App, callback?: (app: App) => void) {
   app.use(router)
 
-  if (callback instanceof Function) {
+  if (typeof callback === 'function') {
     router.isReady().finally(() => {
       callback(app)
     })
