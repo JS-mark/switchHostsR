@@ -1,7 +1,9 @@
 import type { RouteRecordRaw } from 'vue-router'
-import type { CreateLocalHostsData } from '@/types'
 
 import { defineStore } from 'pinia'
+
+import type { CreateLocalHostsData } from '@/types'
+
 import { globalEventEmitter } from '@/utils'
 import { setHistory } from '@/router/history'
 

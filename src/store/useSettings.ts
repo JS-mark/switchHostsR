@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { getType } from '@/utils/index'
 import { isEmpty, set } from 'lodash-es'
+
+import { getType } from '@/utils/index'
 import { APP_NAME } from '@/utils/constant'
 
 export namespace SettingSpace {

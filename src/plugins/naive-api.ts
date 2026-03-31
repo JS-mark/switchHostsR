@@ -1,7 +1,8 @@
 import { computed } from 'vue'
+import { createDiscreteApi, darkTheme } from 'naive-ui'
+
 import { lighten } from '@/utils/index'
 import { useSettingsStore } from '@/store'
-import { createDiscreteApi, darkTheme } from 'naive-ui'
 
 /**
  * 挂载 Naive-ui 脱离上下文的 API

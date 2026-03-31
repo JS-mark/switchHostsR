@@ -1,4 +1,4 @@
-import { useBridgeFunc } from "./common"
+import { useBridgeFunc } from './common'
 
 /**
  * 打开文件

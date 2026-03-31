@@ -1,8 +1,10 @@
+import { customAlphabet, urlAlphabet } from 'nanoid'
+
 import type { User } from '@/store'
 import type { Result } from '@/apis/public'
+import type { useBridgeCb } from '@/utils/bridge'
 
-import { customAlphabet, urlAlphabet } from 'nanoid'
-import { SYSTEM_ENV, type useBridgeCb, useJSBridge } from '@/utils/bridge'
+import { SYSTEM_ENV, useJSBridge } from '@/utils/bridge'
 
 export * from './time'
 export * from './constant'

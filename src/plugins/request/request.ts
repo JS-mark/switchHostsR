@@ -83,7 +83,7 @@ abstract class Request {
    * @param {*} config
    */
   getURl(config: ReqOptions['config'], url: GetUrlOption['url']) {
-    if (/http(s):\/\//i.test(url))
+    if (/https?:\/\//i.test(url))
       return url
 
     if (!config)

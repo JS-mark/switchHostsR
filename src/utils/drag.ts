@@ -1,5 +1,5 @@
 // 获取相关CSS属性
-const getCss = function (o, key) {
+function getCss(o, key) {
   return o.currentStyle
     ? o.currentStyle[key]
     : document.defaultView?.getComputedStyle(o, null)[key]
@@ -13,7 +13,7 @@ const params = {
   flag: false,
 }
 
-const startDrag = function (bar, target, callback?) {
+function startDrag(bar, target, callback?) {
   const screenWidth = document.body.clientWidth // body当前宽度
   const screenHeight = document.documentElement.clientHeight // 可见区域高度
 

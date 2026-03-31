@@ -1,5 +1,8 @@
 import type { App } from 'vue'
-import { type Feature, useFeatureStore } from '../store/featureStore'
+
+import type { Feature } from '../store/featureStore'
+
+import { useFeatureStore } from '../store/featureStore'
 
 export function useFeature(app: App, options?: { list?: Feature[] }) {
   console.warn(`当前版本: ${app.version}`)

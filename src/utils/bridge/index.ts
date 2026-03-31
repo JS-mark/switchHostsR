@@ -1,4 +1,6 @@
-import { Bridge, SYSTEM_ENV, type useBridgeCb } from './bridge-class'
+import type { useBridgeCb } from './bridge-class'
+
+import { Bridge, SYSTEM_ENV } from './bridge-class'
 
 export function useJSBridge() {
   const env = window.utools ? SYSTEM_ENV.UTOOLS : SYSTEM_ENV.TAURI

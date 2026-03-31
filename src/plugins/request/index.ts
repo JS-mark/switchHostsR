@@ -17,7 +17,9 @@ import {
   lightTheme,
 } from 'naive-ui'
 
-import Request, { type ReqOptions } from './request'
+import type { ReqOptions } from './request'
+
+import Request from './request'
 
 const themeRef = ref<'light' | 'dark'>('light')
 const configProviderPropsRef = computed<ConfigProviderProps>(() => ({

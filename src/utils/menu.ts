@@ -1,6 +1,7 @@
+import { defineAsyncComponent, h } from 'vue'
+
 import type { TFn } from '@/langs'
 
-import { defineAsyncComponent, h } from 'vue'
 import { useFeatureStore, useUserStore } from '@/store'
 
 const SvgIcon = defineAsyncComponent(() => import('@/components/svg-icon/svg.vue'))
