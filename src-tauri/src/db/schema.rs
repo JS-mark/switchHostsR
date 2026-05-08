@@ -15,6 +15,7 @@ diesel::table! {
         user_id -> Integer,
         name -> Text,
         description -> Nullable<Text>,
+        is_active -> Integer,
         created_at -> Integer,
         updated_at -> Integer,
     }

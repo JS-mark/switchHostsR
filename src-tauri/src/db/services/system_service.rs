@@ -3,9 +3,21 @@
 //! 提供系统信息相关的服务功能
 
 use anyhow::Result;
+use diesel::prelude::*;
+use diesel::sql_types::Text;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use crate::db::DbPool;
 use super::BaseService;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackupInfo {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: i32,
+    pub file_name: String,
+}
 
 /// 系统信息结构体
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,12 +100,135 @@ impl SystemService {
         Ok(0)
     }
 
-    /// 恢复备份
-    pub async fn restore_backup(&self, _auth: &crate::auth::AuthContext, _backup_id: String) -> Result<()> {
-        // 简化实现，直接返回成功
+    fn get_backups_dir() -> Result<PathBuf> {
+        let home = dirs::home_dir().ok_or_else(|| anyhow::anyhow!("无法获取用户主目录"))?;
+        let dir = home.join(".switchhostsr").join("backups");
+        std::fs::create_dir_all(&dir)?;
+        Ok(dir)
+    }
+
+    fn get_backups_index_path() -> Result<PathBuf> {
+        Ok(Self::get_backups_dir()?.join("backups.json"))
+    }
+
+    fn read_backups_index() -> Result<Vec<BackupInfo>> {
+        let path = Self::get_backups_index_path()?;
+        if !path.exists() {
+            return Ok(vec![]);
+        }
+        let content = std::fs::read_to_string(&path)?;
+        let list = serde_json::from_str::<Vec<BackupInfo>>(&content).unwrap_or_default();
+        Ok(list)
+    }
+
+    fn write_backups_index(list: &[BackupInfo]) -> Result<()> {
+        let path = Self::get_backups_index_path()?;
+        let content = serde_json::to_string_pretty(list)?;
+        std::fs::write(path, content)?;
         Ok(())
     }
 
+    pub async fn create_backup(
+        &self,
+        _auth: &crate::auth::AuthContext,
+        name: String,
+        description: Option<String>,
+    ) -> Result<BackupInfo> {
+        let backups_dir = Self::get_backups_dir()?;
+        let mut list = Self::read_backups_index()?;
+
+        let created_at = chrono::Utc::now().timestamp() as i32;
+        let mut id = created_at;
+        while list.iter().any(|b| b.id == id) {
+            id = id.saturating_add(1);
+        }
+
+        let file_name = format!("backup_{}_{}.db", id, uuid::Uuid::new_v4().simple());
+        let backup_path = backups_dir.join(&file_name);
+        let backup_path_str = backup_path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("备份路径无效"))?
+            .to_string();
+
+        let mut conn = self.pool.get()?;
+        diesel::sql_query("VACUUM INTO ?")
+            .bind::<Text, _>(backup_path_str)
+            .execute(&mut conn)?;
+
+        let info = BackupInfo {
+            id,
+            name,
+            description,
+            created_at,
+            file_name,
+        };
+        list.push(info.clone());
+        list.sort_by(|a, b| b.created_at.cmp(&a.created_at).then_with(|| b.id.cmp(&a.id)));
+        Self::write_backups_index(&list)?;
+
+        Ok(info)
+    }
+
+    pub async fn get_backups(&self, _auth: &crate::auth::AuthContext) -> Result<Vec<BackupInfo>> {
+        let mut list = Self::read_backups_index()?;
+        list.sort_by(|a, b| b.created_at.cmp(&a.created_at).then_with(|| b.id.cmp(&a.id)));
+        Ok(list)
+    }
+
+    pub async fn restore_backup(
+        &self,
+        _auth: &crate::auth::AuthContext,
+        backup_id: i32,
+    ) -> Result<()> {
+        let backups_dir = Self::get_backups_dir()?;
+        let list = Self::read_backups_index()?;
+        let backup = list
+            .into_iter()
+            .find(|b| b.id == backup_id)
+            .ok_or_else(|| anyhow::anyhow!("备份不存在"))?;
+
+        let backup_path = backups_dir.join(backup.file_name);
+        let backup_path_str = backup_path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("备份路径无效"))?
+            .to_string();
+
+        let mut conn = self.pool.get()?;
+
+        diesel::sql_query("PRAGMA foreign_keys=OFF;").execute(&mut conn)?;
+        diesel::sql_query("ATTACH DATABASE ? AS backup;")
+            .bind::<Text, _>(backup_path_str)
+            .execute(&mut conn)?;
+        diesel::sql_query("BEGIN IMMEDIATE;").execute(&mut conn)?;
+
+        diesel::sql_query("DELETE FROM host_group_relations;").execute(&mut conn)?;
+        diesel::sql_query("DELETE FROM host_groups;").execute(&mut conn)?;
+        diesel::sql_query("DELETE FROM hosts;").execute(&mut conn)?;
+        diesel::sql_query("DELETE FROM logs;").execute(&mut conn)?;
+        diesel::sql_query("DELETE FROM users;").execute(&mut conn)?;
+
+        diesel::sql_query("INSERT INTO users SELECT * FROM backup.users;").execute(&mut conn)?;
+        diesel::sql_query("INSERT INTO hosts SELECT * FROM backup.hosts;").execute(&mut conn)?;
+        diesel::sql_query("INSERT INTO logs SELECT * FROM backup.logs;").execute(&mut conn)?;
+        diesel::sql_query("INSERT INTO host_groups SELECT * FROM backup.host_groups;")
+            .execute(&mut conn)?;
+        diesel::sql_query(
+            "INSERT INTO host_group_relations SELECT * FROM backup.host_group_relations;",
+        )
+        .execute(&mut conn)?;
+
+        let _ = diesel::sql_query("DELETE FROM sqlite_sequence;").execute(&mut conn);
+        let _ = diesel::sql_query("INSERT INTO sqlite_sequence SELECT * FROM backup.sqlite_sequence;")
+            .execute(&mut conn);
+
+        diesel::sql_query("COMMIT;").execute(&mut conn)?;
+        diesel::sql_query("DETACH DATABASE backup;").execute(&mut conn)?;
+        diesel::sql_query("PRAGMA foreign_keys=ON;").execute(&mut conn)?;
+
+        Ok(())
+    }
+
+    /// 恢复备份
     /// 重启服务
     pub async fn restart_service(&self, _auth: &crate::auth::AuthContext) -> Result<()> {
         // 简化实现，直接返回成功

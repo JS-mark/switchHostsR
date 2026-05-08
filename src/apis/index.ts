@@ -1,4 +1,5 @@
 export * from './user'
 export * from './logs'
 export * from './hosts'
+export * from './system'
 export * from './host-groups'

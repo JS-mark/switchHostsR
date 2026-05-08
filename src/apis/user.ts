@@ -10,8 +10,7 @@ import { useBridgeFunc } from '@/utils'
  */
 export function getUserInfoByGithub(name: string, token?: string) {
   const octokit = new Octokit({
-    // 从调用方传入或使用环境变量，不再硬编码
-    auth: token || import.meta.env.VITE_GITHUB_TOKEN || undefined,
+    auth: token || undefined,
   })
 
   return octokit.request('GET /users/{username}', {
@@ -20,12 +19,10 @@ export function getUserInfoByGithub(name: string, token?: string) {
       'X-GitHub-Api-Version': '2022-11-28',
     },
   }).then((res) => {
-    if (res.status === 200) {
-      if (!res.data.email)
-        return Promise.reject(res)
-      else return Promise.resolve(res.data)
-    }
-    else { return Promise.reject(res) }
+    if (res.status === 200)
+      return Promise.resolve(res.data)
+    else
+      return Promise.reject(res)
   }).catch((err) => {
     return Promise.reject(err)
   })

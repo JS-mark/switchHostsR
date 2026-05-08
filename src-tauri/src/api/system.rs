@@ -7,6 +7,8 @@ use crate::{require_auth, safe_execute};
 use serde::Deserialize;
 use tauri::State;
 
+pub type BackupInfo = crate::db::services::system_service::BackupInfo;
+
 /// 系统配置更新请求
 #[derive(Debug, Deserialize)]
 pub struct UpdateSystemConfigRequest {
@@ -76,20 +78,26 @@ pub async fn clean_logs(state: State<'_, AppState>, days: i32) -> Result<ApiResu
 /// 创建备份
 #[tauri::command]
 pub async fn create_backup(
-    _state: State<'_, AppState>,
-    _request: CreateBackupRequest,
-) -> Result<ApiResult<String>, ()> {
-    let _auth = require_auth!();
-    // 简化实现，返回成功消息
-    Ok(ApiResult::success("备份创建成功".to_string()))
+    state: State<'_, AppState>,
+    request: CreateBackupRequest,
+) -> Result<ApiResult<BackupInfo>, ()> {
+    let auth = require_auth!();
+    let system_service = state.service_factory.system_service();
+
+    Ok(safe_execute!(
+        system_service
+            .create_backup(&auth, request.name, request.description)
+            .await
+    ))
 }
 
 /// 获取备份列表
 #[tauri::command]
-pub async fn get_backups(_state: State<'_, AppState>) -> Result<ApiResult<Vec<String>>, ()> {
-    let _auth = require_auth!();
-    // 简化实现，返回空列表
-    Ok(ApiResult::success(vec![]))
+pub async fn get_backups(state: State<'_, AppState>) -> Result<ApiResult<Vec<BackupInfo>>, ()> {
+    let auth = require_auth!();
+    let system_service = state.service_factory.system_service();
+
+    Ok(safe_execute!(system_service.get_backups(&auth).await))
 }
 
 /// 恢复备份
@@ -103,7 +111,7 @@ pub async fn restore_backup(
 
     Ok(safe_execute!(
         system_service
-            .restore_backup(&auth, request.backup_id.to_string())
+            .restore_backup(&auth, request.backup_id)
             .await
     ))
 }

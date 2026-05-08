@@ -10,6 +10,7 @@ pub mod services;
 use anyhow::Result;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::sync::Arc;
 use std::{env, error::Error};
 
@@ -40,6 +41,14 @@ pub fn create_pool() -> Result<DbPool, Box<dyn Error>> {
         .map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
     Ok(Arc::new(pool))
+}
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+pub fn run_migrations(pool: &DbPool) -> Result<()> {
+    let mut conn = pool.get()?;
+    conn.run_pending_migrations(MIGRATIONS)?;
+    Ok(())
 }
 
 #[cfg(test)]
