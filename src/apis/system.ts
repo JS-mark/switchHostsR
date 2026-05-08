@@ -8,6 +8,8 @@ export interface BackupInfo {
   description: string | null
   created_at: number
   file_name: string
+  app_version?: string
+  schema_version?: number
 }
 
 export function createBackup(request: { name: string, description?: string }) {
