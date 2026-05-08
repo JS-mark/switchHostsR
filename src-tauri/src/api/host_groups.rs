@@ -117,6 +117,7 @@ pub async fn create_host_group(
     let create_req = crate::db::services::host_group_service::CreateHostGroupRequest {
         name: request.name,
         description: request.description,
+        is_active: request.is_active,
     };
 
     Ok(safe_execute!(

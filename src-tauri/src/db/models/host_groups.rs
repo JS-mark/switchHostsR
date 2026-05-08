@@ -9,6 +9,7 @@ pub struct HostGroup {
     pub user_id: i32,
     pub name: String,
     pub description: Option<String>,
+    pub is_active: i32,
     pub created_at: i32,
     pub updated_at: i32,
 }
@@ -19,6 +20,7 @@ pub struct NewHostGroup {
     pub user_id: i32,
     pub name: String,
     pub description: Option<String>,
+    pub is_active: i32,
     pub created_at: i32,
     pub updated_at: i32,
 }

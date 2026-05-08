@@ -35,7 +35,7 @@ sysinfo = "0.30.9"
 window-vibrancy = "0.5.3"
 tauri-plugin-os = "2.2"
 tauri-plugin-fs = "2.3"
-tauri-plugin-dialog = "2.2"
+tauri-plugin-dialog = { version = "2.2", default-features = false, features = ["xdg-portal"] }
 tauri-plugin-clipboard-manager = "2.2"
 tauri-plugin-notification = "2.2"
 tauri-plugin-process = "2.2"

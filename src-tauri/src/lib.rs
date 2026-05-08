@@ -83,6 +83,11 @@ pub fn run() {
         }
     };
 
+    if let Err(e) = crate::db::run_migrations(&pool) {
+        error!("Failed to run database migrations: {}", e);
+        std::process::exit(1);
+    }
+
     // 初始化服务工厂
     init_service_factory(pool);
     info!("Database and service factory initialized successfully");

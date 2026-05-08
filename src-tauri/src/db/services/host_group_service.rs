@@ -8,7 +8,7 @@ use crate::db::{
     models::{Host, HostGroup, HostGroupRelation, host_groups::{NewHostGroup, NewHostGroupRelation}, logs::NewLog},
     schema::{
         host_group_relations::dsl::{host_group_relations, group_id as hgr_group_id, host_id as hgr_host_id},
-        host_groups::dsl::{host_groups, id, name, description, created_at, updated_at, user_id},
+        host_groups::dsl::{host_groups, id, name, description, is_active, created_at, updated_at, user_id},
         hosts::dsl as hosts_dsl,
     },
     DbPool,
@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateHostGroupRequest {
     pub name: String,
     pub description: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 /// 更新主机组请求
@@ -133,6 +134,7 @@ impl HostGroupService {
             user_id: auth.user_id,
             name: request.name,
             description: request.description,
+            is_active: if request.is_active.unwrap_or(true) { 1 } else { 0 },
             created_at: now,
             updated_at: now,
         };
@@ -211,11 +213,10 @@ impl HostGroupService {
             );
         }
 
-        // 注意：host_groups表没有is_active字段，跳过活跃状态过滤
-        // if let Some(active_filter) = params.active_only {
-        //     let active_value = if active_filter { 1 } else { 0 };
-        //     query = query.filter(is_active.eq(active_value));
-        // }
+        if let Some(active_filter) = params.active_only {
+            let active_value = if active_filter { 1 } else { 0 };
+            query = query.filter(is_active.eq(active_value));
+        }
 
         // 获取总数 - 重新构建查询
         let mut count_query = host_groups.into_boxed();
@@ -234,11 +235,10 @@ impl HostGroupService {
             );
         }
 
-        // 注意：host_groups表没有is_active字段，跳过活跃状态过滤
-        // if let Some(active_filter) = params.active_only {
-        //     let active_value = if active_filter { 1 } else { 0 };
-        //     count_query = count_query.filter(is_active.eq(active_value));
-        // }
+        if let Some(active_filter) = params.active_only {
+            let active_value = if active_filter { 1 } else { 0 };
+            count_query = count_query.filter(is_active.eq(active_value));
+        }
 
         let total = count_query.count().get_result::<i64>(&mut conn)? as i32;
 
@@ -356,16 +356,34 @@ impl HostGroupService {
         }
 
         let now = chrono::Utc::now().timestamp() as i32;
+        let existing_name = existing_group.name.clone();
+        let existing_description = existing_group.description.clone();
+        let existing_is_active = existing_group.is_active;
+        let next_is_active = request
+            .is_active
+            .map(|v| if v { 1 } else { 0 })
+            .unwrap_or(existing_is_active);
 
         diesel::update(host_groups.find(group_id))
             .set((
-                name.eq(request.name.unwrap_or(existing_group.name)),
-                description.eq(request.description.or(existing_group.description)),
-                // HostGroup 模型没有 is_active 字段，暂时移除这个更新
-                // is_active.eq(request.is_active.unwrap_or(existing_group.is_active)),
+                name.eq(request.name.unwrap_or(existing_name)),
+                description.eq(request.description.or(existing_description)),
+                is_active.eq(next_is_active),
                 updated_at.eq(now),
             ))
             .execute(&mut conn)?;
+
+        if request.is_active.is_some() {
+            let host_ids = host_group_relations
+                .filter(hgr_group_id.eq(group_id))
+                .select(hgr_host_id)
+                .load::<i32>(&mut conn)?;
+            if !host_ids.is_empty() {
+                diesel::update(hosts_dsl::hosts.filter(hosts_dsl::id.eq_any(host_ids)))
+                    .set(hosts_dsl::is_active.eq(next_is_active))
+                    .execute(&mut conn)?;
+            }
+        }
 
         let updated_group = host_groups.find(group_id).first::<HostGroup>(&mut conn)?;
 
@@ -545,9 +563,37 @@ impl HostGroupService {
             self.check_permission(auth, Permission::HostGroupUpdate)?;
         }
 
-        // HostGroup 模型没有 is_active 字段，这个功能可能需要重新设计
-        // 暂时注释掉这个功能
-        Err(anyhow::anyhow!("Toggle active status not implemented for HostGroup"))
+        let next_is_active = if existing_group.is_active == 1 { 0 } else { 1 };
+        let now = chrono::Utc::now().timestamp() as i32;
+
+        diesel::update(host_groups.find(group_id))
+            .set((is_active.eq(next_is_active), updated_at.eq(now)))
+            .execute(&mut conn)?;
+
+        let host_ids = host_group_relations
+            .filter(hgr_group_id.eq(group_id))
+            .select(hgr_host_id)
+            .load::<i32>(&mut conn)?;
+        if !host_ids.is_empty() {
+            diesel::update(hosts_dsl::hosts.filter(hosts_dsl::id.eq_any(host_ids)))
+                .set(hosts_dsl::is_active.eq(next_is_active))
+                .execute(&mut conn)?;
+        }
+
+        let updated_group = host_groups.find(group_id).first::<HostGroup>(&mut conn)?;
+
+        self.log_host_group_operation(
+            auth.user_id,
+            "toggle_host_group_active",
+            group_id,
+            Some(format!(
+                "切换主机组 {} 状态为 {}",
+                updated_group.name,
+                if updated_group.is_active == 1 { "启用" } else { "禁用" }
+            )),
+        )?;
+
+        Ok(updated_group)
     }
 
     /// 批量操作主机组
@@ -578,18 +624,36 @@ impl HostGroupService {
 
             match request.action.as_str() {
                 "activate" => {
-                    // host_groups表没有is_active字段，暂时只更新updated_at
+                    let now = chrono::Utc::now().timestamp() as i32;
                     diesel::update(host_groups.find(group_id))
-                        .set(updated_at.eq(chrono::Utc::now().timestamp() as i32))
+                        .set((is_active.eq(1), updated_at.eq(now)))
                         .execute(&mut conn)?;
+                    let host_ids = host_group_relations
+                        .filter(hgr_group_id.eq(group_id))
+                        .select(hgr_host_id)
+                        .load::<i32>(&mut conn)?;
+                    if !host_ids.is_empty() {
+                        diesel::update(hosts_dsl::hosts.filter(hosts_dsl::id.eq_any(host_ids)))
+                            .set(hosts_dsl::is_active.eq(1))
+                            .execute(&mut conn)?;
+                    }
                     let updated_group = host_groups.find(group_id).first::<HostGroup>(&mut conn)?;
                     results.push(updated_group);
                 }
                 "deactivate" => {
-                    // host_groups表没有is_active字段，暂时只更新updated_at
+                    let now = chrono::Utc::now().timestamp() as i32;
                     diesel::update(host_groups.find(group_id))
-                        .set(updated_at.eq(chrono::Utc::now().timestamp() as i32))
+                        .set((is_active.eq(0), updated_at.eq(now)))
                         .execute(&mut conn)?;
+                    let host_ids = host_group_relations
+                        .filter(hgr_group_id.eq(group_id))
+                        .select(hgr_host_id)
+                        .load::<i32>(&mut conn)?;
+                    if !host_ids.is_empty() {
+                        diesel::update(hosts_dsl::hosts.filter(hosts_dsl::id.eq_any(host_ids)))
+                            .set(hosts_dsl::is_active.eq(0))
+                            .execute(&mut conn)?;
+                    }
                     let updated_group = host_groups.find(group_id).first::<HostGroup>(&mut conn)?;
                     results.push(updated_group);
                 }
@@ -643,9 +707,15 @@ impl HostGroupService {
         }
 
         let total_groups = total_query.count().get_result::<i64>(&mut conn)? as i32;
-        // host_groups表没有is_active字段，暂时将所有组都视为活跃状态
-        let active_groups = total_groups;
-        let inactive_groups = 0i32;
+        let mut active_query = host_groups.into_boxed();
+        if self.check_permission(auth, Permission::HostGroupRead).is_err() {
+            active_query = active_query.filter(user_id.eq(auth.user_id));
+        }
+        let active_groups = active_query
+            .filter(is_active.eq(1))
+            .count()
+            .get_result::<i64>(&mut conn)? as i32;
+        let inactive_groups = total_groups - active_groups;
 
         // 当前用户的主机组数
         let user_groups = host_groups
@@ -771,6 +841,7 @@ mod tests {
         let create_request = CreateHostGroupRequest {
             name: "Test Group".to_string(),
             description: Some("Test group description".to_string()),
+            is_active: None,
         };
 
         let group = host_group_service.create_host_group(&auth, create_request).unwrap();
@@ -798,6 +869,7 @@ mod tests {
         let create_request = CreateHostGroupRequest {
             name: "Test Group".to_string(),
             description: Some("Test group description".to_string()),
+            is_active: None,
         };
 
         let group = host_group_service.create_host_group(&auth, create_request).unwrap();
@@ -829,6 +901,7 @@ mod tests {
         let create_request = CreateHostGroupRequest {
             name: "Test Group".to_string(),
             description: None,
+            is_active: None,
         };
 
         let group = host_group_service.create_host_group(&auth, create_request).unwrap();
