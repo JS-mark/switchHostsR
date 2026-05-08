@@ -36,6 +36,10 @@ const backupOptions = computed(() => {
   }))
 })
 
+const backupDirTip = computed(() => {
+  return `${model.SwitchHostsRPath}/backups`
+})
+
 function loadBackups() {
   isLoadingBackups.value = true
   getBackups().then((res) => {
@@ -91,6 +95,7 @@ function handleRestoreBackup() {
       restoreBackup(target.id).then((res) => {
         if (res.code === 200) {
           message.success('恢复成功')
+          message.info('建议重启应用以确保数据与登录态刷新')
         }
         else {
           message.error(res.msg || '恢复失败')
@@ -212,6 +217,12 @@ onMounted(() => {
             恢复
           </n-button>
         </n-space>
+      </div>
+      <div class="row a-center mt-8px">
+        <span class="tip">备份目录：{{ backupDirTip }}</span>
+      </div>
+      <div class="row a-center mt-4px">
+        <span class="tip">备份包含用户与配置等数据，请妥善保管备份文件。</span>
       </div>
     </AdvancedCell>
   </section>

@@ -17,6 +17,10 @@ pub struct BackupInfo {
     pub description: Option<String>,
     pub created_at: i32,
     pub file_name: String,
+    #[serde(default)]
+    pub app_version: String,
+    #[serde(default)]
+    pub schema_version: i32,
 }
 
 /// 系统信息结构体
@@ -117,8 +121,7 @@ impl SystemService {
             return Ok(vec![]);
         }
         let content = std::fs::read_to_string(&path)?;
-        let list = serde_json::from_str::<Vec<BackupInfo>>(&content).unwrap_or_default();
-        Ok(list)
+        serde_json::from_str::<Vec<BackupInfo>>(&content).map_err(|e| e.into())
     }
 
     fn write_backups_index(list: &[BackupInfo]) -> Result<()> {
@@ -161,6 +164,8 @@ impl SystemService {
             description,
             created_at,
             file_name,
+            app_version: env!("CARGO_PKG_VERSION").to_string(),
+            schema_version: 1,
         };
         list.push(info.clone());
         list.sort_by(|a, b| b.created_at.cmp(&a.created_at).then_with(|| b.id.cmp(&a.id)));
@@ -195,6 +200,12 @@ impl SystemService {
 
         let mut conn = self.pool.get()?;
 
+        #[derive(QueryableByName)]
+        struct PragmaColumnName {
+            #[diesel(sql_type = Text)]
+            name: String,
+        }
+
         diesel::sql_query("PRAGMA foreign_keys=OFF;").execute(&mut conn)?;
         diesel::sql_query("ATTACH DATABASE ? AS backup;")
             .bind::<Text, _>(backup_path_str)
@@ -207,11 +218,50 @@ impl SystemService {
         diesel::sql_query("DELETE FROM logs;").execute(&mut conn)?;
         diesel::sql_query("DELETE FROM users;").execute(&mut conn)?;
 
-        diesel::sql_query("INSERT INTO users SELECT * FROM backup.users;").execute(&mut conn)?;
-        diesel::sql_query("INSERT INTO hosts SELECT * FROM backup.hosts;").execute(&mut conn)?;
-        diesel::sql_query("INSERT INTO logs SELECT * FROM backup.logs;").execute(&mut conn)?;
-        diesel::sql_query("INSERT INTO host_groups SELECT * FROM backup.host_groups;")
+        diesel::sql_query(
+            "INSERT INTO users (id, username, password, email, avatar, is_admin, created_at, updated_at)
+             SELECT id, username, password, email, avatar, is_admin, created_at, updated_at
+             FROM backup.users;",
+        )
+        .execute(&mut conn)?;
+
+        diesel::sql_query(
+            "INSERT INTO hosts (id, user_id, name, description, content, is_active, is_system, created_at, updated_at)
+             SELECT id, user_id, name, description, content, is_active, is_system, created_at, updated_at
+             FROM backup.hosts;",
+        )
+        .execute(&mut conn)?;
+
+        diesel::sql_query(
+            "INSERT INTO logs (id, user_id, action, target_type, target_id, details, created_at)
+             SELECT id, user_id, action, target_type, target_id, details, created_at
+             FROM backup.logs;",
+        )
+        .execute(&mut conn)?;
+
+        let host_groups_columns = diesel::sql_query("SELECT name FROM backup.pragma_table_info('host_groups');")
+            .load::<PragmaColumnName>(&mut conn)?
+            .into_iter()
+            .map(|c| c.name)
+            .collect::<Vec<String>>();
+        let has_is_active = host_groups_columns.iter().any(|c| c == "is_active");
+
+        if has_is_active {
+            diesel::sql_query(
+                "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
+                 SELECT id, user_id, name, description, is_active, created_at, updated_at
+                 FROM backup.host_groups;",
+            )
             .execute(&mut conn)?;
+        } else {
+            diesel::sql_query(
+                "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
+                 SELECT id, user_id, name, description, 1, created_at, updated_at
+                 FROM backup.host_groups;",
+            )
+            .execute(&mut conn)?;
+        }
+
         diesel::sql_query(
             "INSERT INTO host_group_relations SELECT * FROM backup.host_group_relations;",
         )
