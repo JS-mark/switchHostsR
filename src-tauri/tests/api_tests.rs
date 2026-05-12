@@ -89,6 +89,7 @@ fn create_test_db() -> (app_lib::db::DbPool, TempDir) {
             user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
             created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -283,6 +284,7 @@ async fn test_host_groups_service() {
     let create_request = CreateHostGroupRequest {
         name: "test_group".to_string(),
         description: Some("测试主机组描述".to_string()),
+        is_active: None,
     };
 
     let group = host_group_service
@@ -291,6 +293,7 @@ async fn test_host_groups_service() {
     assert_eq!(group.name, "test_group");
     assert_eq!(group.description, Some("测试主机组描述".to_string()));
     assert_eq!(group.user_id, auth.user_id);
+    assert_eq!(group.is_active, 1);
 
     // 测试获取主机组
     let retrieved_group = host_group_service
