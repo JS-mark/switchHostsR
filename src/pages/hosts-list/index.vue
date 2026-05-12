@@ -257,12 +257,12 @@ onBeforeUnmount(() => {
           </template>
         </n-input>
         <n-button-group size="small">
-          <n-button :loading="data.loading" @click="refreshData">
+          <n-button :loading="data.loading" data-testid="hosts-refresh" @click="refreshData">
             <template #icon>
               <n-icon :component="Refresh" />
             </template>
           </n-button>
-          <n-button type="primary" @click="addNewHosts">
+          <n-button type="primary" data-testid="hosts-new" @click="addNewHosts">
             <template #icon>
               <n-icon :component="Plus" />
             </template>
@@ -270,13 +270,13 @@ onBeforeUnmount(() => {
           </n-button>
         </n-button-group>
         <n-button-group size="small">
-          <n-button :loading="isLoadingSystemHosts" @click="viewSystemHosts">
+          <n-button :loading="isLoadingSystemHosts" data-testid="hosts-view-system" @click="viewSystemHosts">
             <template #icon>
               <n-icon :component="FileText" />
             </template>
             系统 Hosts
           </n-button>
-          <n-button type="warning" @click="handleApplyToSystem">
+          <n-button type="warning" data-testid="hosts-apply-system" @click="handleApplyToSystem">
             <template #icon>
               <n-icon :component="Upload" />
             </template>
@@ -319,6 +319,7 @@ onBeforeUnmount(() => {
                         size="small"
                         :type="hosts.is_active === 1 ? 'default' : 'primary'"
                         :disabled="hosts.is_system === 1"
+                        :data-testid="hosts.id === data.curId ? 'hosts-toggle-active' : undefined"
                         @click="handleToggleHostStatus(hosts)"
                       >
                         <template #icon>
@@ -330,6 +331,7 @@ onBeforeUnmount(() => {
                         size="small"
                         type="error"
                         :disabled="hosts.is_system === 1"
+                        :data-testid="hosts.id === data.curId ? 'hosts-delete' : undefined"
                         @click="handleDeleteHost(hosts)"
                       >
                         <template #icon>

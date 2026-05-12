@@ -126,12 +126,14 @@ export default defineComponent({
       <n-input
         v-model:value="data.nickname"
         :placeholder="$t('login.nickname')"
+        data-testid="register-nickname"
       />
     </n-form-item>
     <n-form-item :label="$t('login.email')" path="email">
       <n-input
         v-model:value="data.email"
         :placeholder="$t('login.email')"
+        data-testid="register-email"
       />
     </n-form-item>
     <n-form-item :label="$t('login.password')" path="password">
@@ -140,6 +142,7 @@ export default defineComponent({
         type="password"
         show-password-on="mousedown"
         :placeholder="$t('login.password')"
+        data-testid="register-password"
       />
     </n-form-item>
     <n-button
@@ -148,6 +151,7 @@ export default defineComponent({
       size="medium"
       type="primary"
       dashed
+      data-testid="register-submit"
       @click="onRegister"
       @keydown.enter="onRegister"
     >

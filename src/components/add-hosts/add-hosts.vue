@@ -211,6 +211,7 @@ onMounted(() => {
             v-model:value="data.model.hostsType"
             :placeholder="$t('请选择 Hosts 类型')"
             :options="hostsTypeOptions"
+            data-testid="addhosts-type"
           />
         </n-form-item>
 
@@ -219,6 +220,7 @@ onMounted(() => {
           <n-input
             v-model:value="data.model.title"
             :placeholder="$t('请输入名称')"
+            data-testid="addhosts-title"
           />
         </n-form-item>
 
@@ -255,10 +257,17 @@ onMounted(() => {
       </n-form>
 
       <template #footer>
-        <n-button round size="small" type="warning" @click="onCancel">
+        <n-button round size="small" type="warning" data-testid="addhosts-cancel" @click="onCancel">
           {{ $t("cancel") }}
         </n-button>
-        <n-button round size="small" type="primary" :loading="isSubmitting" @click="onSubmit">
+        <n-button
+          round
+          size="small"
+          type="primary"
+          :loading="isSubmitting"
+          data-testid="addhosts-confirm"
+          @click="onSubmit"
+        >
           {{ $t("confirm") }}
         </n-button>
       </template>

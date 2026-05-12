@@ -32,7 +32,8 @@
     "docs:preview": "rspress preview docs",
     "deploy": "gh-pages -d dist",
     "lint:eslint": "eslint \"{src,mock}/**/*.{vue,ts,tsx}\" --fix",
-    "lint:stylelint": "stylelint --fix \"**/*.{vue,less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/"
+    "lint:stylelint": "stylelint --fix \"**/*.{vue,less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
+    "test:e2e": "pnpm -C e2e-tests test"
   },
   "dependencies": {
     "@alova/mock": "^2.0.17",
