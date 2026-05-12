@@ -13,105 +13,25 @@ use app_lib::{
     },
 };
 use chrono;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use tempfile::TempDir;
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 /// 创建测试数据库连接池
 fn create_test_db() -> (app_lib::db::DbPool, TempDir) {
-    use diesel::RunQueryDsl;
-
     let temp_dir = TempDir::new().expect("无法创建临时目录");
-
-    // 使用内存数据库
-    let db_url = ":memory:";
-
-    // 设置环境变量
-    std::env::set_var("DATABASE_URL", db_url);
+    let db_path = temp_dir.path().join("test.db");
+    std::env::set_var("DATABASE_URL", db_path.to_string_lossy().to_string());
+    std::env::set_var("HOME", temp_dir.path().to_string_lossy().to_string());
+    std::env::set_var("USERPROFILE", temp_dir.path().to_string_lossy().to_string());
 
     let pool = create_pool().expect("无法创建数据库连接池");
-
-    // 手动创建表结构（用于测试）
-    let mut conn = pool.get().expect("无法获取数据库连接");
-
-    // 创建用户表
-    diesel::sql_query(
-        "CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            email TEXT,
-            avatar TEXT,
-            is_admin INTEGER,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
-        )",
-    )
-    .execute(&mut conn)
-    .expect("无法创建用户表");
-
-    // 创建日志表
-    diesel::sql_query(
-        "CREATE TABLE logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            action TEXT NOT NULL,
-            target_type TEXT NOT NULL,
-            target_id INTEGER,
-            details TEXT,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )",
-    )
-    .execute(&mut conn)
-    .expect("无法创建日志表");
-
-    // 创建主机表
-    diesel::sql_query(
-        "CREATE TABLE hosts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            content TEXT NOT NULL,
-            is_active INTEGER NOT NULL DEFAULT 0,
-            is_system INTEGER NOT NULL DEFAULT 0,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )",
-    )
-    .execute(&mut conn)
-    .expect("无法创建主机表");
-
-    // 创建主机组表
-    diesel::sql_query(
-        "CREATE TABLE host_groups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )",
-    )
-    .execute(&mut conn)
-    .expect("无法创建主机组表");
-
-    // 创建主机组关联表
-    diesel::sql_query(
-        "CREATE TABLE host_group_relations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            group_id INTEGER NOT NULL,
-            host_id INTEGER NOT NULL,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            FOREIGN KEY (group_id) REFERENCES host_groups(id) ON DELETE CASCADE,
-            FOREIGN KEY (host_id) REFERENCES hosts(id) ON DELETE CASCADE,
-            UNIQUE(group_id, host_id)
-        )",
-    )
-    .execute(&mut conn)
-    .expect("无法创建主机组关联表");
+    {
+        let mut conn = pool.get().expect("无法获取数据库连接");
+        conn.run_pending_migrations(MIGRATIONS)
+            .expect("无法运行迁移");
+    }
 
     (pool, temp_dir)
 }
