@@ -87,6 +87,7 @@ fn create_test_db() -> (app_lib::db::DbPool, TempDir) {
             user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
             created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -271,6 +272,7 @@ async fn test_complete_host_group_workflow() {
     let create_group_request = CreateHostGroupRequest {
         name: "Test Group".to_string(),
         description: Some("Test group description".to_string()),
+        is_active: None,
     };
     
     let group = host_group_service.create_host_group(&auth, create_group_request).unwrap();
@@ -297,6 +299,10 @@ async fn test_complete_host_group_workflow() {
     let updated_group = host_group_service.update_host_group(&auth, group.id, update_group_request).unwrap();
     assert_eq!(updated_group.name, "Updated Test Group");
     assert!(!updated_group.name.is_empty());
+    assert_eq!(updated_group.is_active, 0);
+
+    let updated_host = host_service.get_host_by_id(&auth, host.id).unwrap();
+    assert_eq!(updated_host.is_active, 0);
     
     // 6. 从组中移除主机
     host_group_service.remove_host_from_group(&auth, group.id, host.id).unwrap();
@@ -440,6 +446,7 @@ async fn test_data_consistency() {
     let create_group_request = CreateHostGroupRequest {
         name: "Consistency Test Group".to_string(),
         description: None,
+        is_active: None,
     };
     
     let group = host_group_service.create_host_group(&auth, create_group_request).unwrap();
