@@ -61,7 +61,7 @@ jobs:
 
       - name: 运行 Rust 测试
         working-directory: src-tauri
-        run: cargo test --lib
+        run: cargo test
 
   # TypeScript 类型检查
   typecheck:

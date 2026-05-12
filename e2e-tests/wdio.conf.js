@@ -22,18 +22,21 @@ function closeTauriDriver() {
 }
 
 function onShutdown(fn) {
+  let cleaned = false
   const cleanup = () => {
+    if (cleaned)
+      return
+    cleaned = true
     try {
       fn()
-    } finally {
-      process.exit()
+    } catch {
     }
   }
-  process.on('exit', cleanup)
-  process.on('SIGINT', cleanup)
-  process.on('SIGTERM', cleanup)
-  process.on('SIGHUP', cleanup)
-  process.on('SIGBREAK', cleanup)
+  process.once('beforeExit', cleanup)
+  process.once('SIGINT', cleanup)
+  process.once('SIGTERM', cleanup)
+  process.once('SIGHUP', cleanup)
+  process.once('SIGBREAK', cleanup)
 }
 
 onShutdown(() => {
@@ -107,4 +110,3 @@ export const config = {
     closeTauriDriver()
   },
 }
-

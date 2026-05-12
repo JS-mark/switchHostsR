@@ -100,6 +100,15 @@ pub async fn get_backups(state: State<'_, AppState>) -> Result<ApiResult<Vec<Bac
     Ok(safe_execute!(system_service.get_backups(&auth).await))
 }
 
+/// 获取备份目录
+#[tauri::command]
+pub async fn get_backup_dir(state: State<'_, AppState>) -> Result<ApiResult<String>, ()> {
+    let auth = require_auth!();
+    let system_service = state.service_factory.system_service();
+
+    Ok(safe_execute!(system_service.get_backup_dir(&auth).await))
+}
+
 /// 恢复备份
 #[tauri::command]
 pub async fn restore_backup(

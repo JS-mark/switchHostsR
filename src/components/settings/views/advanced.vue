@@ -7,7 +7,7 @@ import type { SettingSpace } from '@/store/useSettings'
 
 import { APP_NAME } from '@/utils/constant'
 import { useSettingsStore } from '@/store/useSettings'
-import { createBackup, getBackups, restoreBackup } from '@/apis'
+import { createBackup, getBackupDir, getBackups, restoreBackup } from '@/apis'
 import { formatTimeV2, openDirectory, openFile, sendLog } from '@/utils'
 
 import AdvancedCell from './components/advanced-cell.vue'
@@ -28,6 +28,7 @@ const backups = ref<BackupInfo[]>([])
 const isLoadingBackups = ref(false)
 const isCreatingBackup = ref(false)
 const selectedBackupId = ref<number | null>(null)
+const backupDir = ref('')
 
 const backupOptions = computed(() => {
   return backups.value.map(b => ({
@@ -37,7 +38,7 @@ const backupOptions = computed(() => {
 })
 
 const backupDirTip = computed(() => {
-  return `${model.SwitchHostsRPath}/backups`
+  return backupDir.value || `${model.SwitchHostsRPath}/backups`
 })
 
 function loadBackups() {
@@ -143,6 +144,11 @@ watchEffect(() => {
 
 onMounted(() => {
   loadBackups()
+  getBackupDir().then((res) => {
+    if (res.code === 200)
+      backupDir.value = res.data || ''
+  }).catch(() => {
+  })
 })
 </script>
 
