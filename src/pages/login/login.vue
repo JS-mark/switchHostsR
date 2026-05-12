@@ -123,7 +123,7 @@ export default defineComponent({
     require-mark-placement="right-hanging"
   >
     <n-form-item :label="$t('login.email')" path="email">
-      <n-input v-model:value="data.email" :placeholder="$t('login.email')" />
+      <n-input v-model:value="data.email" :placeholder="$t('login.email')" data-testid="login-email" />
     </n-form-item>
     <n-form-item
       :label="$t('login.password')"
@@ -134,6 +134,7 @@ export default defineComponent({
         type="password"
         show-password-on="mousedown"
         :placeholder="$t('login.password')"
+        data-testid="login-password"
       />
     </n-form-item>
     <n-button
@@ -142,6 +143,7 @@ export default defineComponent({
       size="medium"
       type="primary"
       dashed
+      data-testid="login-submit"
       @click="login"
       @keydown.enter="login"
     >

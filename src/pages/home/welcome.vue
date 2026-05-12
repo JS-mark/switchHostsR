@@ -48,18 +48,21 @@ async function getHostsStats() {
 // 快速操作
 const quickActions = [
   {
+    id: 'manage-hosts',
     title: '管理 Hosts',
     description: '查看和编辑所有 hosts 文件',
     icon: 'list',
     action: () => router.push('/hosts-list'),
   },
   {
+    id: 'add-hosts',
     title: '添加新配置',
     description: '创建新的 hosts 配置文件',
     icon: 'add',
     action: () => router.push('/hosts-list'),
   },
   {
+    id: 'view-logs',
     title: '查看日志',
     description: '查看操作历史和系统日志',
     icon: 'history',
@@ -174,6 +177,7 @@ onMounted(() => {
           :key="action.title"
           class="action-card"
           hoverable
+          :data-testid="`home-action-${action.id}`"
           @click="action.action"
         >
           <div class="action-content">

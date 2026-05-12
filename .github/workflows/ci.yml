@@ -85,3 +85,44 @@ jobs:
 
       - name: 类型检查
         run: npx vue-tsc --noEmit
+
+  e2e:
+    name: E2E (Tauri WebDriver)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 安装 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 安装系统依赖 (Ubuntu)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf webkit2gtk-driver xvfb
+
+      - name: 安装 tauri-driver
+        run: cargo install tauri-driver --locked
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 E2E 依赖
+        run: pnpm -C e2e-tests install --frozen-lockfile=false
+
+      - name: 运行 E2E
+        run: xvfb-run -a pnpm test:e2e
