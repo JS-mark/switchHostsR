@@ -35,6 +35,15 @@ export function getBackups() {
   })
 }
 
+export function getBackupDir() {
+  return useBridgeFunc<Result<string>>(() => {
+  }, (bridge, resolve, reject) => {
+    bridge.core.invoke('get_backup_dir')
+      .then(res => resolve(res as Result<string>))
+      .catch(err => reject(err))
+  })
+}
+
 export function restoreBackup(backupId: number) {
   return useBridgeFunc<Result<void>>(() => {
   }, (bridge, resolve, reject) => {

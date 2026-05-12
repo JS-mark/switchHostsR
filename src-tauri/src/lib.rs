@@ -137,6 +137,7 @@ pub fn run() {
             api::system::clean_logs,
             api::system::create_backup,
             api::system::get_backups,
+            api::system::get_backup_dir,
             api::system::restore_backup,
             api::system::restart_service,
             // 文件操作和通用命令

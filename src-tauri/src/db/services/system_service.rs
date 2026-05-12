@@ -180,6 +180,13 @@ impl SystemService {
         Ok(list)
     }
 
+    pub async fn get_backup_dir(&self, _auth: &crate::auth::AuthContext) -> Result<String> {
+        Ok(Self::get_backups_dir()?
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("备份路径无效"))?
+            .to_string())
+    }
+
     pub async fn restore_backup(
         &self,
         _auth: &crate::auth::AuthContext,
@@ -207,75 +214,95 @@ impl SystemService {
         }
 
         diesel::sql_query("PRAGMA foreign_keys=OFF;").execute(&mut conn)?;
-        diesel::sql_query("ATTACH DATABASE ? AS backup;")
+
+        if let Err(e) = diesel::sql_query("ATTACH DATABASE ? AS backup;")
             .bind::<Text, _>(backup_path_str)
-            .execute(&mut conn)?;
-        diesel::sql_query("BEGIN IMMEDIATE;").execute(&mut conn)?;
-
-        diesel::sql_query("DELETE FROM host_group_relations;").execute(&mut conn)?;
-        diesel::sql_query("DELETE FROM host_groups;").execute(&mut conn)?;
-        diesel::sql_query("DELETE FROM hosts;").execute(&mut conn)?;
-        diesel::sql_query("DELETE FROM logs;").execute(&mut conn)?;
-        diesel::sql_query("DELETE FROM users;").execute(&mut conn)?;
-
-        diesel::sql_query(
-            "INSERT INTO users (id, username, password, email, avatar, is_admin, created_at, updated_at)
-             SELECT id, username, password, email, avatar, is_admin, created_at, updated_at
-             FROM backup.users;",
-        )
-        .execute(&mut conn)?;
-
-        diesel::sql_query(
-            "INSERT INTO hosts (id, user_id, name, description, content, is_active, is_system, created_at, updated_at)
-             SELECT id, user_id, name, description, content, is_active, is_system, created_at, updated_at
-             FROM backup.hosts;",
-        )
-        .execute(&mut conn)?;
-
-        diesel::sql_query(
-            "INSERT INTO logs (id, user_id, action, target_type, target_id, details, created_at)
-             SELECT id, user_id, action, target_type, target_id, details, created_at
-             FROM backup.logs;",
-        )
-        .execute(&mut conn)?;
-
-        let host_groups_columns = diesel::sql_query("SELECT name FROM backup.pragma_table_info('host_groups');")
-            .load::<PragmaColumnName>(&mut conn)?
-            .into_iter()
-            .map(|c| c.name)
-            .collect::<Vec<String>>();
-        let has_is_active = host_groups_columns.iter().any(|c| c == "is_active");
-
-        if has_is_active {
-            diesel::sql_query(
-                "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
-                 SELECT id, user_id, name, description, is_active, created_at, updated_at
-                 FROM backup.host_groups;",
-            )
-            .execute(&mut conn)?;
-        } else {
-            diesel::sql_query(
-                "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
-                 SELECT id, user_id, name, description, 1, created_at, updated_at
-                 FROM backup.host_groups;",
-            )
-            .execute(&mut conn)?;
+            .execute(&mut conn)
+        {
+            let _ = diesel::sql_query("PRAGMA foreign_keys=ON;").execute(&mut conn);
+            return Err(e.into());
         }
 
-        diesel::sql_query(
-            "INSERT INTO host_group_relations SELECT * FROM backup.host_group_relations;",
-        )
-        .execute(&mut conn)?;
+        if let Err(e) = diesel::sql_query("BEGIN IMMEDIATE;").execute(&mut conn) {
+            let _ = diesel::sql_query("DETACH DATABASE backup;").execute(&mut conn);
+            let _ = diesel::sql_query("PRAGMA foreign_keys=ON;").execute(&mut conn);
+            return Err(e.into());
+        }
 
-        let _ = diesel::sql_query("DELETE FROM sqlite_sequence;").execute(&mut conn);
-        let _ = diesel::sql_query("INSERT INTO sqlite_sequence SELECT * FROM backup.sqlite_sequence;")
-            .execute(&mut conn);
+        let result: Result<()> = (|| {
+            diesel::sql_query("DELETE FROM host_group_relations;").execute(&mut conn)?;
+            diesel::sql_query("DELETE FROM host_groups;").execute(&mut conn)?;
+            diesel::sql_query("DELETE FROM hosts;").execute(&mut conn)?;
+            diesel::sql_query("DELETE FROM logs;").execute(&mut conn)?;
+            diesel::sql_query("DELETE FROM users;").execute(&mut conn)?;
 
-        diesel::sql_query("COMMIT;").execute(&mut conn)?;
-        diesel::sql_query("DETACH DATABASE backup;").execute(&mut conn)?;
-        diesel::sql_query("PRAGMA foreign_keys=ON;").execute(&mut conn)?;
+            diesel::sql_query(
+                "INSERT INTO users (id, username, password, email, avatar, is_admin, created_at, updated_at)
+                 SELECT id, username, password, email, avatar, is_admin, created_at, updated_at
+                 FROM backup.users;",
+            )
+            .execute(&mut conn)?;
 
-        Ok(())
+            diesel::sql_query(
+                "INSERT INTO hosts (id, user_id, name, description, content, is_active, is_system, created_at, updated_at)
+                 SELECT id, user_id, name, description, content, is_active, is_system, created_at, updated_at
+                 FROM backup.hosts;",
+            )
+            .execute(&mut conn)?;
+
+            diesel::sql_query(
+                "INSERT INTO logs (id, user_id, action, target_type, target_id, details, created_at)
+                 SELECT id, user_id, action, target_type, target_id, details, created_at
+                 FROM backup.logs;",
+            )
+            .execute(&mut conn)?;
+
+            let host_groups_columns = diesel::sql_query("SELECT name FROM backup.pragma_table_info('host_groups');")
+                .load::<PragmaColumnName>(&mut conn)?
+                .into_iter()
+                .map(|c| c.name)
+                .collect::<Vec<String>>();
+            let has_is_active = host_groups_columns.iter().any(|c| c == "is_active");
+
+            if has_is_active {
+                diesel::sql_query(
+                    "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
+                     SELECT id, user_id, name, description, is_active, created_at, updated_at
+                     FROM backup.host_groups;",
+                )
+                .execute(&mut conn)?;
+            } else {
+                diesel::sql_query(
+                    "INSERT INTO host_groups (id, user_id, name, description, is_active, created_at, updated_at)
+                     SELECT id, user_id, name, description, 1, created_at, updated_at
+                     FROM backup.host_groups;",
+                )
+                .execute(&mut conn)?;
+            }
+
+            diesel::sql_query(
+                "INSERT INTO host_group_relations (id, group_id, host_id, created_at)
+                 SELECT id, group_id, host_id, created_at
+                 FROM backup.host_group_relations;",
+            )
+            .execute(&mut conn)?;
+
+            let _ = diesel::sql_query("DELETE FROM sqlite_sequence;").execute(&mut conn);
+            let _ = diesel::sql_query("INSERT INTO sqlite_sequence SELECT * FROM backup.sqlite_sequence;")
+                .execute(&mut conn);
+
+            diesel::sql_query("COMMIT;").execute(&mut conn)?;
+            Ok(())
+        })();
+
+        if result.is_err() {
+            let _ = diesel::sql_query("ROLLBACK;").execute(&mut conn);
+        }
+
+        let _ = diesel::sql_query("DETACH DATABASE backup;").execute(&mut conn);
+        let _ = diesel::sql_query("PRAGMA foreign_keys=ON;").execute(&mut conn);
+
+        result
     }
 
     /// 恢复备份
