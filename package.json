@@ -45,7 +45,7 @@
     "json-server": "^0.17.4",
     "less": "^4.2.0",
     "lint-staged": "^15.2.0",
-    "postcss": "^8.4.32",
+    "postcss": "^8.5.18",
     "simple-git-hooks": "^2.9.0",
     "typescript": "^5.3.3",
     "unplugin-auto-import": "^0.17.2",
